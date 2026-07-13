@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="auth.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JLPT N4 Study Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            line-height: 1.6;
+        }
+        .container { max-width: 1200px; margin: 0 auto; padding: 40px 20px; }
+
+        .header { text-align: center; margin-bottom: 50px; }
+        .header h1 { font-size: 2.5em; color: #2b6cb0; margin-bottom: 10px; }
+        .header .subtitle { font-size: 1.1em; color: #666; margin-bottom: 6px; }
+
+        .countdown-banner {
+            display: inline-flex; align-items: center; gap: 12px;
+            background: linear-gradient(135deg, #22543d 0%, #38a169 100%);
+            color: white; padding: 10px 24px; border-radius: 30px;
+            margin-top: 15px; font-weight: 600;
+            box-shadow: 0 2px 8px rgba(34, 84, 61, 0.3);
+        }
+        .countdown-label { font-size: 0.95em; opacity: 0.9; }
+        .countdown-separator { opacity: 0.5; font-size: 1.2em; }
+        .countdown-days { font-size: 1.4em; font-weight: 800; }
+
+        .wheels-section {
+            display: flex; justify-content: center; gap: 60px;
+            margin-bottom: 60px; flex-wrap: wrap;
+        }
+        .wheel-container { display: flex; flex-direction: column; align-items: center; gap: 15px; }
+        .wheel {
+            width: 150px; height: 150px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            position: relative; background: white; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .wheel-label { font-size: 0.95em; color: #666; font-weight: 600; text-align: center; }
+        .percentage { font-size: 1.8em; font-weight: bold; text-align: center; }
+
+        .wheel-kanji .percentage { color: #975a16; }
+        .wheel-vocab .percentage { color: #b83280; }
+        .wheel-grammar .percentage { color: #2f855a; }
+        .wheel-plan .percentage { color: #2b6cb0; }
+
+        .cards-section { margin-bottom: 40px; }
+        .cards-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 25px; margin-bottom: 40px; }
+        .card {
+            background: white; padding: 30px; border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center;
+            cursor: pointer; transition: all 0.3s ease; text-decoration: none;
+            color: inherit; display: flex; flex-direction: column; align-items: center; gap: 15px;
+            position: relative;
+        }
+        .card:hover { transform: translateY(-5px); box-shadow: 0 6px 16px rgba(0,0,0,0.12); }
+        .card-icon { font-size: 3em; line-height: 1; }
+        .card-title { font-size: 1.1em; font-weight: 600; color: #2b6cb0; }
+
+        /* "Coming soon" cards — not yet built, non-clickable */
+        .card.soon { cursor: default; opacity: 0.62; }
+        .card.soon:hover { transform: none; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .soon-badge {
+            position: absolute; top: 10px; right: 10px;
+            background: #edf2f7; color: #718096; font-size: 0.65em;
+            font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
+            padding: 3px 8px; border-radius: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 { font-size: 2em; }
+            .wheels-section { gap: 30px; }
+            .cards-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
+            .card { padding: 20px; }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="cloud_sync.js"></script>
+    <script src="vocab_progress.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>JLPT N4 Study Dashboard</h1>
+            <div class="subtitle">Genki II · Lessons 13–23</div>
+            <div class="countdown-banner">
+                <span class="countdown-label">Target: Saturday, 5 December 2026</span>
+                <span class="countdown-separator">|</span>
+                <span class="countdown-days" id="countdown-days"></span>
+            </div>
+        </div>
+
+        <!-- Progress Wheels -->
+        <div class="wheels-section">
+            <div class="wheel-container">
+                <div class="wheel wheel-kanji">
+                    <svg width="150" height="150" style="position: absolute; transform: rotate(-90deg);">
+                        <circle cx="75" cy="75" r="65" fill="none" stroke="#e0e7ff" stroke-width="8"/>
+                        <circle id="wheel-arc-kanji" cx="75" cy="75" r="65" fill="none" stroke="#975a16" stroke-width="8"
+                                stroke-dasharray="0 408.41" stroke-linecap="round"/>
+                    </svg>
+                    <div style="position: relative; z-index: 1; text-align: center;">
+                        <div class="percentage" id="wheel-pct-kanji">—</div>
+                        <div id="wheel-count-kanji" style="font-size: 0.85em; color: #666; margin-top: 5px;">— / 172</div>
+                    </div>
+                </div>
+                <div class="wheel-label">Kanji N4</div>
+            </div>
+
+            <div class="wheel-container">
+                <div class="wheel wheel-vocab">
+                    <svg width="150" height="150" style="position: absolute; transform: rotate(-90deg);">
+                        <circle cx="75" cy="75" r="65" fill="none" stroke="#e0e7ff" stroke-width="8"/>
+                        <circle id="wheel-arc-vocab" cx="75" cy="75" r="65" fill="none" stroke="#b83280" stroke-width="8"
+                                stroke-dasharray="0 408.41" stroke-linecap="round"/>
+                    </svg>
+                    <div style="position: relative; z-index: 1; text-align: center;">
+                        <div class="percentage" id="wheel-pct-vocab">—</div>
+                        <div id="wheel-count-vocab" style="font-size: 0.85em; color: #666; margin-top: 5px;">— / 611</div>
+                    </div>
+                </div>
+                <div class="wheel-label">Vocabulary</div>
+            </div>
+
+            <div class="wheel-container">
+                <div class="wheel wheel-grammar">
+                    <svg width="150" height="150" style="position: absolute; transform: rotate(-90deg);">
+                        <circle cx="75" cy="75" r="65" fill="none" stroke="#e0e7ff" stroke-width="8"/>
+                        <circle id="wheel-arc-grammar" cx="75" cy="75" r="65" fill="none" stroke="#2f855a" stroke-width="8"
+                                stroke-dasharray="0 408.41" stroke-linecap="round"/>
+                    </svg>
+                    <div style="position: relative; z-index: 1; text-align: center;">
+                        <div class="percentage" id="wheel-pct-grammar">0%</div>
+                        <div id="wheel-count-grammar" style="font-size: 0.85em; color: #666; margin-top: 5px;">0 / 56</div>
+                    </div>
+                </div>
+                <div class="wheel-label">Grammar</div>
+            </div>
+
+            <div class="wheel-container">
+                <div class="wheel wheel-plan">
+                    <svg width="150" height="150" style="position: absolute; transform: rotate(-90deg);">
+                        <circle cx="75" cy="75" r="65" fill="none" stroke="#e0e7ff" stroke-width="8"/>
+                        <circle id="wheel-arc-plan" cx="75" cy="75" r="65" fill="none" stroke="#2b6cb0" stroke-width="8"
+                                stroke-dasharray="0 408.41" stroke-linecap="round"/>
+                    </svg>
+                    <div style="position: relative; z-index: 1; text-align: center;">
+                        <div class="percentage" id="wheel-pct-plan">0%</div>
+                        <div id="wheel-count-plan" style="font-size: 0.85em; color: #666; margin-top: 5px;">0 / 20</div>
+                    </div>
+                </div>
+                <div class="wheel-label">Study Plan</div>
+            </div>
+        </div>
+
+        <!-- Cards Grid -->
+        <div class="cards-section">
+            <div class="cards-grid">
+                <a href="study-plan.html" class="card">
+                    <div class="card-icon">📋</div>
+                    <div class="card-title">Study Plan</div>
+                </a>
+                <a href="grammar.html" class="card">
+                    <div class="card-icon">✓</div>
+                    <div class="card-title">Grammar Checklist</div>
+                </a>
+                <a href="kanji.html" class="card">
+                    <div class="card-icon">漢</div>
+                    <div class="card-title">Kanji N4</div>
+                </a>
+                <a href="vocabulary.html" class="card">
+                    <div class="card-icon">語</div>
+                    <div class="card-title">Vocabulary</div>
+                </a>
+                <a href="verbs.html" class="card">
+                    <div class="card-icon">動</div>
+                    <div class="card-title">Verb Forms (potential/passive/causative)</div>
+                </a>
+                <div class="card soon">
+                    <span class="soon-badge">soon</span>
+                    <div class="card-icon">🃏</div>
+                    <div class="card-title">Flashcards</div>
+                </div>
+                <div class="card soon">
+                    <span class="soon-badge">soon</span>
+                    <div class="card-icon">📝</div>
+                    <div class="card-title">Mock Exam</div>
+                </div>
+                <a href="exam.html" class="card">
+                    <div class="card-icon">試</div>
+                    <div class="card-title">Exam Format</div>
+                </a>
+                <div class="card soon">
+                    <span class="soon-badge">soon</span>
+                    <div class="card-icon">📚</div>
+                    <div class="card-title">Genki II Books</div>
+                </div>
+                <div class="card soon">
+                    <span class="soon-badge">soon</span>
+                    <div class="card-icon">🎧</div>
+                    <div class="card-title">Genki II Listening</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCountdown();
+            scheduleCountdownRefresh();
+            updateWheels();
+        });
+        window.addEventListener('cloudsync:ready', function() { updateWheels(); });
+        window.addEventListener('cloudsync:update', function() { updateWheels(); });
+
+        function updateCountdown() {
+            const target = new Date(2026, 11, 5); // Year, Month (0-indexed: 11 = Dec), Day 5
+            const now = new Date();
+            const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const msPerDay = 1000 * 60 * 60 * 24;
+            const days = Math.round((target - today) / msPerDay);
+            const el = document.getElementById('countdown-days');
+            if (el) {
+                if (days > 1) el.textContent = days + ' days to go';
+                else if (days === 1) el.textContent = '1 day to go';
+                else if (days === 0) el.textContent = 'Today!';
+                else el.textContent = 'Exam complete!';
+            }
+        }
+        function scheduleCountdownRefresh() {
+            const now = new Date();
+            const nextMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 5);
+            setTimeout(function() {
+                updateCountdown();
+                setInterval(updateCountdown, 24 * 60 * 60 * 1000);
+            }, nextMidnight - now);
+        }
+
+        function updateWheels() {
+            var circumference = 2 * Math.PI * 65; // ~408.41
+
+            function setWheel(id, known, total, dash) {
+                var pct = total > 0 ? Math.round((known / total) * 100) : 0;
+                var arc = (pct / 100) * circumference;
+                var arcEl = document.getElementById('wheel-arc-' + id);
+                var pctEl = document.getElementById('wheel-pct-' + id);
+                var countEl = document.getElementById('wheel-count-' + id);
+                if (arcEl) arcEl.setAttribute('stroke-dasharray', arc + ' ' + circumference);
+                if (pctEl) pctEl.textContent = dash ? '—' : (pct + '%');
+                if (countEl) countEl.textContent = (dash ? '—' : known) + ' / ' + total;
+            }
+
+            // --- Kanji N4 (173 in Genki II 13–23) ---
+            var kanjiScores = {};
+            try { kanjiScores = JSON.parse(localStorage.getItem('n4_kanji_scores') || '{}'); } catch(e) {}
+            var KANJI_TOTAL = 172;
+            var kanjiKeys = Object.keys(kanjiScores);
+            if (kanjiKeys.length === 0) {
+                setWheel('kanji', 0, KANJI_TOTAL, true); // no data yet → dash
+            } else {
+                var kanjiKnown = 0;
+                kanjiKeys.forEach(function (k) {
+                    var s = kanjiScores[k];
+                    if (!s) return;
+                    if (s.status === 'green') kanjiKnown++;
+                    else if (!s.status && s.streak >= 1) kanjiKnown++;
+                });
+                setWheel('kanji', kanjiKnown, KANJI_TOTAL, false);
+            }
+
+            // --- Vocabulary N4 ---
+            var vocabScores = {};
+            try { vocabScores = JSON.parse(localStorage.getItem('n4_vocab_scores') || '{}'); } catch(e) {}
+            var wordList = null;
+            try { wordList = JSON.parse(localStorage.getItem('n4_vocab_word_list') || 'null'); } catch(e) {}
+            if (window.VocabProgress && Array.isArray(wordList) && wordList.length) {
+                var r = VocabProgress.compute(wordList, vocabScores, kanjiScores);
+                setWheel('vocab', r.mastered, r.total, false);
+            } else {
+                setWheel('vocab', 0, 611, true); // vocab page not opened yet → dash
+            }
+
+            // --- Grammar (Genki II checklist) ---
+            var grammarChecked = {};
+            try { grammarChecked = JSON.parse(localStorage.getItem('n4_grammar_checked') || '{}'); } catch(e) {}
+            var grammarTotal = parseInt(localStorage.getItem('n4_grammar_total') || '56', 10) || 56;
+            var grammarDone = Object.keys(grammarChecked).filter(function (k) { return grammarChecked[k]; }).length;
+            setWheel('grammar', grammarDone, grammarTotal, false);
+
+            // --- Study Plan (20 weeks) ---
+            var plan = {};
+            try { plan = JSON.parse(localStorage.getItem('n4_study_plan_completed') || '{}'); } catch(e) {}
+            var PLAN_TOTAL = 20;
+            var planDone = Object.keys(plan).filter(function (k) { return plan[k]; }).length;
+            setWheel('plan', planDone, PLAN_TOTAL, false);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="auth.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N4 Kanji — Genki II</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Segoe UI',system-ui,sans-serif; background:#f0f4f8; color:#333; padding:20px; line-height:1.6; }
+        .container { max-width:1050px; margin:0 auto; }
+        nav { margin-bottom:20px; }
+        nav a { display:inline-block; padding:10px 16px; background:#2b6cb0; color:#fff; text-decoration:none; border-radius:6px; font-weight:500; }
+        nav a:hover { background:#4299e1; }
+        .page-header h1 { color:#975a16; font-size:2.3em; margin-bottom:4px; }
+        .page-header p { color:#666; margin-bottom:18px; }
+
+        .summary { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:16px; }
+        .stat-card { background:#fff; border-radius:8px; padding:14px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+        .stat-card .stat-number { font-size:1.7em; font-weight:800; }
+        .stat-card .stat-label { font-size:0.82em; color:#666; }
+        .stat-card.mastered .stat-number { color:#2f855a; }
+        .stat-card.learning .stat-number { color:#b7791f; }
+        .stat-card.needs-work .stat-number { color:#c53030; }
+        .stat-card.not-started .stat-number { color:#a0aec0; }
+
+        .progress-wrap { background:#fff; border-radius:8px; padding:14px 18px; box-shadow:0 2px 8px rgba(0,0,0,0.08); margin-bottom:16px; }
+        .progress-label { display:flex; justify-content:space-between; font-size:0.9em; color:#4a5568; margin-bottom:6px; }
+        .progress-bar { background:#e2e8f0; border-radius:10px; height:12px; overflow:hidden; }
+        .progress-fill { background:linear-gradient(90deg,#48bb78,#38a169); height:100%; width:0%; transition:width .5s ease; }
+
+        .legend { display:flex; gap:16px; flex-wrap:wrap; font-size:0.82em; color:#555; margin-bottom:16px; align-items:center; }
+        .legend span { display:inline-flex; align-items:center; gap:6px; }
+        .dot { width:14px; height:14px; border-radius:3px; display:inline-block; border:1px solid rgba(0,0,0,0.1); }
+        .dot.green{background:#c6f6d5;} .dot.amber{background:#fefcbf;} .dot.red{background:#fed7d7;} .dot.blue{background:#bee3f8;} .dot.grey{background:#edf2f7;}
+
+        .toggle-all-buttons { display:flex; gap:10px; margin-bottom:16px; }
+        .toggle-all-buttons button { padding:6px 16px; border:1px solid #cbd5e0; background:#fff; border-radius:6px; cursor:pointer; font-size:0.9em; color:#4a5568; }
+        .toggle-all-buttons button:hover { background:#edf2f7; }
+
+        .lesson-section { background:#fff; border-radius:8px; margin-bottom:16px; box-shadow:0 2px 8px rgba(0,0,0,0.1); overflow:hidden; }
+        .section-header { background:linear-gradient(135deg,#975a16 0%,#b7791f 100%); color:#fff; padding:12px 16px; font-size:1.1em; font-weight:600; cursor:pointer; display:flex; align-items:center; gap:10px; user-select:none; }
+        .section-header .toggle-arrow { min-width:16px; }
+        .section-header .sh-title { flex:1; }
+        .section-header .sh-count { font-size:0.78em; opacity:0.9; font-weight:500; }
+        .section-content { padding:16px; display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; }
+        .section-content.collapsed { display:none; }
+
+        .kanji-cell { border:1px solid #e2e8f0; border-radius:8px; padding:12px 10px; text-align:center; background:#fff; transition:transform .15s ease; }
+        .kanji-cell:hover { transform:translateY(-3px); box-shadow:0 4px 12px rgba(0,0,0,0.08); }
+        .kanji-cell.green{background:#f0fff4;border-color:#9ae6b4;} .kanji-cell.amber{background:#fffff0;border-color:#faf089;}
+        .kanji-cell.red{background:#fff5f5;border-color:#feb2b2;} .kanji-cell.blue{background:#ebf8ff;border-color:#90cdf4;}
+        .kanji-character { font-size:2.6em; line-height:1.1; color:#1a202c; }
+        .kanji-meaning { font-size:0.9em; font-weight:600; color:#2d3748; margin:4px 0; }
+        .kanji-reading { font-size:0.8em; color:#718096; }
+        .kanji-reading .lbl { color:#a0aec0; font-size:0.85em; }
+
+        @media (max-width:768px){ .summary{grid-template-columns:repeat(2,1fr);} .page-header h1{font-size:1.8em;} .section-content{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));} }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="cloud_sync.js"></script>
+</head>
+<body>
+<div class="container">
+    <nav><a href="index.html">← Home</a></nav>
+    <div class="page-header">
+        <h1>N4 Kanji</h1>
+        <p>All 172 kanji from Genki II (Lessons 13–23). Colors update from your kanji quiz scores.</p>
+    </div>
+
+    <div class="summary">
+        <div class="stat-card mastered"><div class="stat-number">0</div><div class="stat-label">Mastered</div></div>
+        <div class="stat-card learning"><div class="stat-number">0</div><div class="stat-label">Learning</div></div>
+        <div class="stat-card needs-work"><div class="stat-number">0</div><div class="stat-label">Needs work</div></div>
+        <div class="stat-card not-started"><div class="stat-number">0</div><div class="stat-label">Not started</div></div>
+    </div>
+
+    <div class="progress-wrap">
+        <div class="progress-label"><span>Mastery</span><span>0/172 (0%)</span></div>
+        <div class="progress-bar"><div class="progress-fill"></div></div>
+    </div>
+
+    <div class="legend">
+        <span><i class="dot green"></i> mastered</span>
+        <span><i class="dot amber"></i> learning</span>
+        <span><i class="dot blue"></i> studying</span>
+        <span><i class="dot red"></i> needs work</span>
+        <span><i class="dot grey"></i> not started</span>
+    </div>
+
+    <div class="toggle-all-buttons">
+        <button onclick="expandAll()">Expand All</button>
+        <button onclick="collapseAll()">Collapse All</button>
+    </div>
+
+    <div id="lessons"></div>
+</div>
+
+<script>
+var KANJI = [{"lesson": 13, "kanji": "物", "on": ["ブツ", "モツ"], "kun": ["もの"], "meaning": "thing"}, {"lesson": 13, "kanji": "鳥", "on": ["チョウ"], "kun": ["とり"], "meaning": "bird"}, {"lesson": 13, "kanji": "料", "on": ["リョウ"], "kun": [], "meaning": "fee; materials"}, {"lesson": 13, "kanji": "理", "on": ["リ"], "kun": [], "meaning": "reason; logic"}, {"lesson": 13, "kanji": "特", "on": ["トク"], "kun": [], "meaning": "special"}, {"lesson": 13, "kanji": "安", "on": ["アン"], "kun": ["やす(い)"], "meaning": "cheap; peaceful"}, {"lesson": 13, "kanji": "飯", "on": ["ハン"], "kun": ["めし"], "meaning": "cooked rice; meal"}, {"lesson": 13, "kanji": "肉", "on": ["ニク"], "kun": [], "meaning": "meat"}, {"lesson": 13, "kanji": "悪", "on": ["アク"], "kun": ["わる(い)"], "meaning": "bad"}, {"lesson": 13, "kanji": "体", "on": ["タイ"], "kun": ["からだ"], "meaning": "body"}, {"lesson": 13, "kanji": "空", "on": ["クウ"], "kun": ["そら", "あ(く)"], "meaning": "sky; empty"}, {"lesson": 13, "kanji": "港", "on": ["コウ"], "kun": ["みなと"], "meaning": "harbor; port"}, {"lesson": 13, "kanji": "着", "on": ["チャク"], "kun": ["き(る)", "つ(く)"], "meaning": "to wear; to arrive"}, {"lesson": 13, "kanji": "同", "on": ["ドウ"], "kun": ["おな(じ)"], "meaning": "same"}, {"lesson": 13, "kanji": "海", "on": ["カイ"], "kun": ["うみ"], "meaning": "sea; ocean"}, {"lesson": 13, "kanji": "昼", "on": ["チュウ"], "kun": ["ひる"], "meaning": "noon; daytime"}, {"lesson": 14, "kanji": "彼", "on": [], "kun": ["かれ", "かの"], "meaning": "he; boyfriend"}, {"lesson": 14, "kanji": "代", "on": ["ダイ"], "kun": ["か(わる)", "か(える)"], "meaning": "to substitute; fee; generation"}, {"lesson": 14, "kanji": "留", "on": ["リュウ", "ル"], "kun": ["と(める)"], "meaning": "to fasten; studying abroad"}, {"lesson": 14, "kanji": "族", "on": ["ゾク"], "kun": [], "meaning": "tribe; family"}, {"lesson": 14, "kanji": "親", "on": ["シン"], "kun": ["おや", "した(しい)"], "meaning": "parent; intimate"}, {"lesson": 14, "kanji": "切", "on": ["セツ"], "kun": ["き(る)", "き(れる)"], "meaning": "to cut; earnest"}, {"lesson": 14, "kanji": "英", "on": ["エイ"], "kun": [], "meaning": "England; English"}, {"lesson": 14, "kanji": "店", "on": ["テン"], "kun": ["みせ"], "meaning": "store; shop"}, {"lesson": 14, "kanji": "去", "on": ["キョ", "コ"], "kun": [], "meaning": "past; to leave"}, {"lesson": 14, "kanji": "急", "on": ["キュウ"], "kun": ["いそ(ぐ)"], "meaning": "hurry; sudden"}, {"lesson": 14, "kanji": "乗", "on": ["ジョウ"], "kun": ["の(る)"], "meaning": "to ride"}, {"lesson": 14, "kanji": "当", "on": ["トウ"], "kun": ["あ(たる)"], "meaning": "to hit; correct"}, {"lesson": 14, "kanji": "音", "on": ["オン"], "kun": ["おと"], "meaning": "sound"}, {"lesson": 14, "kanji": "楽", "on": ["ガク", "ラク"], "kun": ["たの(しい)"], "meaning": "music; fun; comfort"}, {"lesson": 14, "kanji": "医", "on": ["イ"], "kun": [], "meaning": "medicine; doctor"}, {"lesson": 14, "kanji": "者", "on": ["シャ"], "kun": ["もの"], "meaning": "person"}, {"lesson": 15, "kanji": "死", "on": ["シ"], "kun": ["し(ぬ)"], "meaning": "to die"}, {"lesson": 15, "kanji": "意", "on": ["イ"], "kun": [], "meaning": "meaning; mind"}, {"lesson": 15, "kanji": "味", "on": ["ミ"], "kun": ["あじ"], "meaning": "taste; flavor"}, {"lesson": 15, "kanji": "注", "on": ["チュウ"], "kun": ["そそ(ぐ)"], "meaning": "to pour; to note"}, {"lesson": 15, "kanji": "夏", "on": ["カ"], "kun": ["なつ"], "meaning": "summer"}, {"lesson": 15, "kanji": "魚", "on": ["ギョ"], "kun": ["さかな", "うお"], "meaning": "fish"}, {"lesson": 15, "kanji": "寺", "on": ["ジ"], "kun": ["てら"], "meaning": "temple"}, {"lesson": 15, "kanji": "広", "on": ["コウ"], "kun": ["ひろ(い)"], "meaning": "wide; spacious"}, {"lesson": 15, "kanji": "転", "on": ["テン"], "kun": ["ころ(ぶ)"], "meaning": "to turn; to roll"}, {"lesson": 15, "kanji": "借", "on": ["シャク"], "kun": ["か(りる)"], "meaning": "to borrow"}, {"lesson": 15, "kanji": "走", "on": ["ソウ"], "kun": ["はし(る)"], "meaning": "to run"}, {"lesson": 15, "kanji": "建", "on": ["ケン"], "kun": ["た(てる)"], "meaning": "to build"}, {"lesson": 15, "kanji": "地", "on": ["チ", "ジ"], "kun": [], "meaning": "ground; earth"}, {"lesson": 15, "kanji": "場", "on": ["ジョウ"], "kun": ["ば"], "meaning": "place"}, {"lesson": 15, "kanji": "足", "on": ["ソク"], "kun": ["あし", "た(りる)"], "meaning": "foot; leg; to suffice"}, {"lesson": 15, "kanji": "通", "on": ["ツウ"], "kun": ["とお(る)", "かよ(う)"], "meaning": "to commute; to pass"}, {"lesson": 16, "kanji": "供", "on": ["キョウ"], "kun": ["とも"], "meaning": "companion; child"}, {"lesson": 16, "kanji": "世", "on": ["セ", "セイ"], "kun": ["よ"], "meaning": "world; generation"}, {"lesson": 16, "kanji": "界", "on": ["カイ"], "kun": [], "meaning": "world; boundary"}, {"lesson": 16, "kanji": "全", "on": ["ゼン"], "kun": ["まった(く)"], "meaning": "all; whole"}, {"lesson": 16, "kanji": "部", "on": ["ブ"], "kun": [], "meaning": "part; section; club"}, {"lesson": 16, "kanji": "始", "on": ["シ"], "kun": ["はじ(まる)", "はじ(める)"], "meaning": "to begin"}, {"lesson": 16, "kanji": "週", "on": ["シュウ"], "kun": [], "meaning": "week"}, {"lesson": 16, "kanji": "以", "on": ["イ"], "kun": [], "meaning": "since; by means of"}, {"lesson": 16, "kanji": "考", "on": ["コウ"], "kun": ["かんが(える)"], "meaning": "to think"}, {"lesson": 16, "kanji": "開", "on": ["カイ"], "kun": ["あ(く)", "ひら(く)"], "meaning": "to open"}, {"lesson": 16, "kanji": "屋", "on": ["オク"], "kun": ["や"], "meaning": "shop; roof"}, {"lesson": 16, "kanji": "方", "on": ["ホウ"], "kun": ["かた"], "meaning": "direction; person; way"}, {"lesson": 16, "kanji": "運", "on": ["ウン"], "kun": ["はこ(ぶ)"], "meaning": "to carry; luck"}, {"lesson": 16, "kanji": "動", "on": ["ドウ"], "kun": ["うご(く)"], "meaning": "to move"}, {"lesson": 16, "kanji": "教", "on": ["キョウ"], "kun": ["おし(える)"], "meaning": "to teach"}, {"lesson": 16, "kanji": "室", "on": ["シツ"], "kun": [], "meaning": "room"}, {"lesson": 17, "kanji": "歳", "on": ["サイ"], "kun": [], "meaning": "years old; age"}, {"lesson": 17, "kanji": "習", "on": ["シュウ"], "kun": ["なら(う)"], "meaning": "to learn"}, {"lesson": 17, "kanji": "主", "on": ["シュ"], "kun": ["ぬし", "おも"], "meaning": "main; master"}, {"lesson": 17, "kanji": "結", "on": ["ケツ"], "kun": ["むす(ぶ)"], "meaning": "to tie; to conclude"}, {"lesson": 17, "kanji": "婚", "on": ["コン"], "kun": [], "meaning": "marriage"}, {"lesson": 17, "kanji": "集", "on": ["シュウ"], "kun": ["あつ(まる)", "あつ(める)"], "meaning": "to gather"}, {"lesson": 17, "kanji": "発", "on": ["ハツ"], "kun": [], "meaning": "to depart; to emit"}, {"lesson": 17, "kanji": "表", "on": ["ヒョウ"], "kun": ["おもて", "あらわ(す)"], "meaning": "to express; surface; table"}, {"lesson": 17, "kanji": "品", "on": ["ヒン"], "kun": ["しな"], "meaning": "goods; article"}, {"lesson": 17, "kanji": "字", "on": ["ジ"], "kun": [], "meaning": "letter; character"}, {"lesson": 17, "kanji": "活", "on": ["カツ"], "kun": [], "meaning": "activity; life"}, {"lesson": 17, "kanji": "写", "on": ["シャ"], "kun": ["うつ(す)"], "meaning": "to copy; to photograph"}, {"lesson": 17, "kanji": "真", "on": ["シン"], "kun": ["ま"], "meaning": "true; genuine"}, {"lesson": 17, "kanji": "歩", "on": ["ホ"], "kun": ["ある(く)"], "meaning": "to walk"}, {"lesson": 17, "kanji": "野", "on": ["ヤ"], "kun": ["の"], "meaning": "field"}, {"lesson": 18, "kanji": "目", "on": ["モク"], "kun": ["め"], "meaning": "eye"}, {"lesson": 18, "kanji": "的", "on": ["テキ"], "kun": ["まと"], "meaning": "target; -like"}, {"lesson": 18, "kanji": "力", "on": ["リョク", "リキ"], "kun": ["ちから"], "meaning": "power; strength"}, {"lesson": 18, "kanji": "洋", "on": ["ヨウ"], "kun": [], "meaning": "ocean; Western"}, {"lesson": 18, "kanji": "服", "on": ["フク"], "kun": [], "meaning": "clothes"}, {"lesson": 18, "kanji": "堂", "on": ["ドウ"], "kun": [], "meaning": "hall"}, {"lesson": 18, "kanji": "授", "on": ["ジュ"], "kun": [], "meaning": "to grant; instruct"}, {"lesson": 18, "kanji": "業", "on": ["ギョウ", "ゴウ"], "kun": [], "meaning": "occupation; business"}, {"lesson": 18, "kanji": "試", "on": ["シ"], "kun": ["ため(す)", "こころ(みる)"], "meaning": "to try; test"}, {"lesson": 18, "kanji": "験", "on": ["ケン"], "kun": [], "meaning": "test; effect"}, {"lesson": 18, "kanji": "貸", "on": ["タイ"], "kun": ["か(す)"], "meaning": "to lend"}, {"lesson": 18, "kanji": "図", "on": ["ズ", "ト"], "kun": [], "meaning": "diagram; drawing"}, {"lesson": 18, "kanji": "館", "on": ["カン"], "kun": [], "meaning": "building; hall"}, {"lesson": 18, "kanji": "終", "on": ["シュウ"], "kun": ["お(わる)"], "meaning": "to end"}, {"lesson": 18, "kanji": "宿", "on": ["シュク"], "kun": ["やど"], "meaning": "lodging"}, {"lesson": 18, "kanji": "題", "on": ["ダイ"], "kun": [], "meaning": "topic; subject"}, {"lesson": 19, "kanji": "春", "on": ["シュン"], "kun": ["はる"], "meaning": "spring"}, {"lesson": 19, "kanji": "秋", "on": ["シュウ"], "kun": ["あき"], "meaning": "autumn"}, {"lesson": 19, "kanji": "冬", "on": ["トウ"], "kun": ["ふゆ"], "meaning": "winter"}, {"lesson": 19, "kanji": "花", "on": ["カ"], "kun": ["はな"], "meaning": "flower"}, {"lesson": 19, "kanji": "様", "on": ["ヨウ"], "kun": ["さま"], "meaning": "Mr./Ms.; state; way"}, {"lesson": 19, "kanji": "不", "on": ["フ", "ブ"], "kun": [], "meaning": "un-; not"}, {"lesson": 19, "kanji": "姉", "on": ["シ"], "kun": ["あね"], "meaning": "older sister"}, {"lesson": 19, "kanji": "兄", "on": ["ケイ", "キョウ"], "kun": ["あに"], "meaning": "older brother"}, {"lesson": 19, "kanji": "漢", "on": ["カン"], "kun": [], "meaning": "China; Han; Chinese"}, {"lesson": 19, "kanji": "卒", "on": ["ソツ"], "kun": [], "meaning": "to graduate"}, {"lesson": 19, "kanji": "工", "on": ["コウ", "ク"], "kun": [], "meaning": "craft; construction"}, {"lesson": 19, "kanji": "研", "on": ["ケン"], "kun": ["と(ぐ)"], "meaning": "to polish; research"}, {"lesson": 19, "kanji": "究", "on": ["キュウ"], "kun": [], "meaning": "to research"}, {"lesson": 19, "kanji": "質", "on": ["シツ"], "kun": [], "meaning": "quality; question"}, {"lesson": 19, "kanji": "問", "on": ["モン"], "kun": ["と(う)"], "meaning": "question; to ask"}, {"lesson": 19, "kanji": "多", "on": ["タ"], "kun": ["おお(い)"], "meaning": "many; much"}, {"lesson": 20, "kanji": "皿", "on": [], "kun": ["さら"], "meaning": "plate; dish"}, {"lesson": 20, "kanji": "声", "on": ["セイ"], "kun": ["こえ"], "meaning": "voice"}, {"lesson": 20, "kanji": "茶", "on": ["チャ", "サ"], "kun": [], "meaning": "tea"}, {"lesson": 20, "kanji": "止", "on": ["シ"], "kun": ["と(まる)", "と(める)"], "meaning": "to stop"}, {"lesson": 20, "kanji": "枚", "on": ["マイ"], "kun": [], "meaning": "counter for flat objects"}, {"lesson": 20, "kanji": "両", "on": ["リョウ"], "kun": [], "meaning": "both"}, {"lesson": 20, "kanji": "無", "on": ["ム", "ブ"], "kun": ["な(い)"], "meaning": "nothing; without"}, {"lesson": 20, "kanji": "払", "on": ["フツ"], "kun": ["はら(う)"], "meaning": "to pay"}, {"lesson": 20, "kanji": "心", "on": ["シン"], "kun": ["こころ"], "meaning": "heart; mind"}, {"lesson": 20, "kanji": "笑", "on": ["ショウ"], "kun": ["わら(う)"], "meaning": "to laugh"}, {"lesson": 20, "kanji": "絶", "on": ["ゼツ"], "kun": ["た(える)"], "meaning": "to cut off; absolutely"}, {"lesson": 20, "kanji": "対", "on": ["タイ"], "kun": [], "meaning": "opposite; versus"}, {"lesson": 20, "kanji": "痛", "on": ["ツウ"], "kun": ["いた(い)"], "meaning": "painful"}, {"lesson": 20, "kanji": "最", "on": ["サイ"], "kun": ["もっと(も)"], "meaning": "most"}, {"lesson": 20, "kanji": "続", "on": ["ゾク"], "kun": ["つづ(く)", "つづ(ける)"], "meaning": "to continue"}, {"lesson": 21, "kanji": "信", "on": ["シン"], "kun": [], "meaning": "to believe; trust"}, {"lesson": 21, "kanji": "経", "on": ["ケイ", "キョウ"], "kun": ["へ(る)"], "meaning": "to pass through; sutra"}, {"lesson": 21, "kanji": "台", "on": ["ダイ", "タイ"], "kun": [], "meaning": "stand; counter for machines"}, {"lesson": 21, "kanji": "風", "on": ["フウ"], "kun": ["かぜ"], "meaning": "wind; style"}, {"lesson": 21, "kanji": "犬", "on": ["ケン"], "kun": ["いぬ"], "meaning": "dog"}, {"lesson": 21, "kanji": "重", "on": ["ジュウ", "チョウ"], "kun": ["おも(い)", "かさ(ねる)"], "meaning": "heavy"}, {"lesson": 21, "kanji": "初", "on": ["ショ"], "kun": ["はじ(め)", "はつ"], "meaning": "first; beginning"}, {"lesson": 21, "kanji": "若", "on": ["ジャク"], "kun": ["わか(い)"], "meaning": "young"}, {"lesson": 21, "kanji": "送", "on": ["ソウ"], "kun": ["おく(る)"], "meaning": "to send"}, {"lesson": 21, "kanji": "幸", "on": ["コウ"], "kun": ["しあわ(せ)", "さいわ(い)"], "meaning": "happiness"}, {"lesson": 21, "kanji": "計", "on": ["ケイ"], "kun": ["はか(る)"], "meaning": "to measure; plan; total"}, {"lesson": 21, "kanji": "遅", "on": ["チ"], "kun": ["おそ(い)", "おく(れる)"], "meaning": "late; slow"}, {"lesson": 21, "kanji": "配", "on": ["ハイ"], "kun": ["くば(る)"], "meaning": "to distribute; worry"}, {"lesson": 21, "kanji": "弟", "on": ["テイ", "ダイ"], "kun": ["おとうと"], "meaning": "younger brother"}, {"lesson": 21, "kanji": "妹", "on": ["マイ"], "kun": ["いもうと"], "meaning": "younger sister"}, {"lesson": 22, "kanji": "記", "on": ["キ"], "kun": ["しる(す)"], "meaning": "to write down; record"}, {"lesson": 22, "kanji": "銀", "on": ["ギン"], "kun": [], "meaning": "silver; bank"}, {"lesson": 22, "kanji": "回", "on": ["カイ"], "kun": ["まわ(る)"], "meaning": "times; to turn"}, {"lesson": 22, "kanji": "夕", "on": [], "kun": ["ゆう"], "meaning": "evening"}, {"lesson": 22, "kanji": "黒", "on": ["コク"], "kun": ["くろ"], "meaning": "black"}, {"lesson": 22, "kanji": "用", "on": ["ヨウ"], "kun": ["もち(いる)"], "meaning": "task; use"}, {"lesson": 22, "kanji": "守", "on": ["シュ"], "kun": ["まも(る)"], "meaning": "to protect"}, {"lesson": 22, "kanji": "末", "on": ["マツ"], "kun": ["すえ"], "meaning": "end"}, {"lesson": 22, "kanji": "待", "on": ["タイ"], "kun": ["ま(つ)"], "meaning": "to wait"}, {"lesson": 22, "kanji": "残", "on": ["ザン"], "kun": ["のこ(る)"], "meaning": "to remain"}, {"lesson": 22, "kanji": "番", "on": ["バン"], "kun": [], "meaning": "number; turn; guard"}, {"lesson": 22, "kanji": "駅", "on": ["エキ"], "kun": [], "meaning": "station"}, {"lesson": 22, "kanji": "説", "on": ["セツ"], "kun": ["と(く)"], "meaning": "theory; to explain"}, {"lesson": 22, "kanji": "案", "on": ["アン"], "kun": [], "meaning": "plan; proposal"}, {"lesson": 22, "kanji": "内", "on": ["ナイ"], "kun": ["うち"], "meaning": "inside"}, {"lesson": 22, "kanji": "忘", "on": ["ボウ"], "kun": ["わす(れる)"], "meaning": "to forget"}, {"lesson": 23, "kanji": "顔", "on": ["ガン"], "kun": ["かお"], "meaning": "face"}, {"lesson": 23, "kanji": "情", "on": ["ジョウ"], "kun": [], "meaning": "feeling; emotion"}, {"lesson": 23, "kanji": "怒", "on": ["ド"], "kun": ["おこ(る)", "いか(る)"], "meaning": "to get angry"}, {"lesson": 23, "kanji": "変", "on": ["ヘン"], "kun": ["か(わる)", "か(える)"], "meaning": "strange; to change"}, {"lesson": 23, "kanji": "相", "on": ["ソウ", "ショウ"], "kun": ["あい"], "meaning": "mutual; appearance"}, {"lesson": 23, "kanji": "横", "on": ["オウ"], "kun": ["よこ"], "meaning": "side; horizontal"}, {"lesson": 23, "kanji": "比", "on": ["ヒ"], "kun": ["くら(べる)"], "meaning": "to compare"}, {"lesson": 23, "kanji": "化", "on": ["カ", "ケ"], "kun": ["ば(ける)"], "meaning": "to change; -ization"}, {"lesson": 23, "kanji": "違", "on": ["イ"], "kun": ["ちが(う)"], "meaning": "to differ; wrong"}, {"lesson": 23, "kanji": "悲", "on": ["ヒ"], "kun": ["かな(しい)"], "meaning": "sad"}, {"lesson": 23, "kanji": "調", "on": ["チョウ"], "kun": ["しら(べる)"], "meaning": "to investigate; tune"}, {"lesson": 23, "kanji": "査", "on": ["サ"], "kun": [], "meaning": "to investigate"}, {"lesson": 23, "kanji": "果", "on": ["カ"], "kun": ["は(たす)"], "meaning": "fruit; result"}, {"lesson": 23, "kanji": "感", "on": ["カン"], "kun": [], "meaning": "feeling; to sense"}, {"lesson": 23, "kanji": "答", "on": ["トウ"], "kun": ["こた(える)"], "meaning": "to answer"}];
+var LESSON_TITLES = {"13": "Potential & Reasons", "14": "Wants & Giving/Receiving", "15": "Volitional & Intentions", "16": "Favors & Conditionals", "17": "Hearsay & たら", "18": "Transitivity & てしまう", "19": "Honorifics", "20": "Humble Speech", "21": "Passive", "22": "Causative", "23": "Causative-Passive"};
+
+function render() {
+    var host = document.getElementById('lessons');
+    host.innerHTML = '';
+    var lessons = [];
+    KANJI.forEach(function(k){ if(lessons.indexOf(k.lesson)===-1) lessons.push(k.lesson); });
+    lessons.forEach(function(L){
+        var items = KANJI.filter(function(k){ return k.lesson===L; });
+        var sec = document.createElement('div'); sec.className='lesson-section';
+        var head = document.createElement('div'); head.className='section-header collapsed';
+        head.innerHTML = '<span class="toggle-arrow">▶</span><span class="sh-title">Lesson '+L+': '+(LESSON_TITLES[L]||'')+'</span><span class="sh-count">'+items.length+' kanji</span>';
+        var body = document.createElement('div'); body.className='section-content collapsed';
+        items.forEach(function(k){
+            var cell = document.createElement('div'); cell.className='kanji-cell';
+            var on = (k.on&&k.on.length)? '<div class="kanji-reading"><span class="lbl">on</span> '+k.on.join('・')+'</div>':'';
+            var kun = (k.kun&&k.kun.length)? '<div class="kanji-reading"><span class="lbl">kun</span> '+k.kun.join('・')+'</div>':'';
+            cell.innerHTML = '<div class="kanji-character">'+k.kanji+'</div><div class="kanji-meaning">'+k.meaning+'</div>'+on+kun;
+            body.appendChild(cell);
+        });
+        head.addEventListener('click', function(){
+            var c = this.classList.toggle('collapsed');
+            body.classList.toggle('collapsed');
+            this.querySelector('.toggle-arrow').textContent = body.classList.contains('collapsed')?'▶':'▼';
+        });
+        sec.appendChild(head); sec.appendChild(body); host.appendChild(sec);
+    });
+    applyKanjiScores();
+}
+
+function expandAll(){ document.querySelectorAll('.section-header').forEach(h=>h.classList.remove('collapsed')); document.querySelectorAll('.section-content').forEach(c=>c.classList.remove('collapsed')); document.querySelectorAll('.toggle-arrow').forEach(a=>a.textContent='▼'); }
+function collapseAll(){ document.querySelectorAll('.section-header').forEach(h=>h.classList.add('collapsed')); document.querySelectorAll('.section-content').forEach(c=>c.classList.add('collapsed')); document.querySelectorAll('.toggle-arrow').forEach(a=>a.textContent='▶'); }
+
+function applyKanjiScores() {
+    var scores;
+    try { scores = JSON.parse(localStorage.getItem('n4_kanji_scores')||'{}'); } catch(e){ scores={}; }
+    var mastered=0, learning=0, needsWork=0, studying=0, notStarted=0;
+    document.querySelectorAll('.kanji-cell').forEach(function(cell){
+        var charEl = cell.querySelector('.kanji-character'); if(!charEl) return;
+        var ch = charEl.textContent.trim();
+        var s = scores[ch];
+        cell.classList.remove('green','amber','red','blue');
+        if (s) {
+            if (s.status==='green'||s.status==='amber'||s.status==='red'||s.status==='blue') cell.classList.add(s.status);
+            else if (s.streak>=3) cell.classList.add('green');
+            else if (s.streak>=1) cell.classList.add('amber');
+            else if (s.wrong>0) cell.classList.add('red');
+            else cell.classList.add('blue');
+        }
+        if (cell.classList.contains('green')) mastered++;
+        else if (cell.classList.contains('amber')) learning++;
+        else if (cell.classList.contains('red')) needsWork++;
+        else if (cell.classList.contains('blue')) studying++;
+        else notStarted++;
+    });
+    var cards = document.querySelectorAll('.stat-card');
+    cards.forEach(function(card){
+        var n=card.querySelector('.stat-number');
+        if(card.classList.contains('mastered')) n.textContent=mastered;
+        else if(card.classList.contains('learning')) n.textContent=learning+studying;
+        else if(card.classList.contains('needs-work')) n.textContent=needsWork;
+        else if(card.classList.contains('not-started')) n.textContent=notStarted;
+    });
+    var total = document.querySelectorAll('.kanji-cell').length;
+    var pct = total>0? Math.round((mastered/total)*100):0;
+    document.querySelector('.progress-fill').style.width = pct+'%';
+    var pl = document.querySelector('.progress-label');
+    if(pl){ var sp=pl.querySelectorAll('span'); if(sp[1]) sp[1].textContent = mastered+'/'+total+' ('+pct+'%)'; }
+}
+
+render();
+window.addEventListener('cloudsync:ready', applyKanjiScores);
+window.addEventListener('cloudsync:update', function(e){ if(!e.detail||e.detail.key==='n4_kanji_scores') applyKanjiScores(); });
+</script>
+</body>
+</html>

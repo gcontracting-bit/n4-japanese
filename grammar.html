@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="auth.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N4 Grammar Checklist — Genki II</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        nav { margin-bottom: 30px; }
+        nav a {
+            display: inline-block;
+            padding: 10px 16px;
+            background-color: #2b6cb0;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+        nav a:hover { background-color: #4299e1; }
+        .page-header { margin-bottom: 20px; }
+        .page-header h1 { color: #2b6cb0; font-size: 2.4em; margin-bottom: 4px; }
+        .page-header p { color: #666; font-size: 1.05em; }
+
+        .summary-bar {
+            display: flex; align-items: center; gap: 16px;
+            background: white; padding: 16px 22px; border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 20px;
+        }
+        .summary-bar .count { font-size: 1.5em; font-weight: 800; color: #2b6cb0; white-space: nowrap; }
+        .progress-bar-container {
+            flex: 1; background: #e2e8f0; border-radius: 10px; height: 12px; overflow: hidden;
+        }
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #48bb78, #38a169);
+            height: 100%; border-radius: 10px; width: 0%; transition: width 0.5s ease;
+        }
+
+        .toggle-all-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+        .toggle-all-buttons button {
+            padding: 6px 16px; border: 1px solid #cbd5e0; background: white;
+            border-radius: 6px; cursor: pointer; font-size: 0.9em; color: #4a5568;
+        }
+        .toggle-all-buttons button:hover { background: #edf2f7; }
+
+        .lesson-card {
+            background: white; border-radius: 8px; margin-bottom: 18px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); overflow: hidden;
+        }
+        .lesson-card h2 {
+            color: white;
+            background: linear-gradient(135deg, #2b6cb0 0%, #4299e1 100%);
+            padding: 12px 16px; font-size: 1.15em; cursor: pointer;
+            display: flex; align-items: center; gap: 10px; user-select: none;
+        }
+        .lesson-card h2 .title-text { flex: 1; }
+        .lesson-card h2 .lesson-count { font-size: 0.75em; opacity: 0.85; font-weight: 500; }
+        .toggle-arrow { display: inline-block; font-size: 1em; min-width: 16px; }
+        .lesson-body { padding: 8px 20px 16px 20px; }
+        .lesson-body.collapsed { display: none; }
+
+        .grammar-item {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 10px 6px; border-bottom: 1px solid #edf2f7;
+        }
+        .grammar-item:last-child { border-bottom: none; }
+        .grammar-item input[type=checkbox] {
+            width: 20px; height: 20px; min-width: 20px; margin-top: 3px;
+            accent-color: #38a169; cursor: pointer;
+        }
+        .grammar-item .g-main { flex: 1; }
+        .grammar-item .g-point { font-weight: 600; color: #2d3748; font-size: 1.05em; }
+        .grammar-item .g-jp { color: #2b6cb0; font-weight: 700; }
+        .grammar-item .g-desc { color: #666; font-size: 0.92em; }
+        .grammar-item.done .g-point { text-decoration: line-through; color: #a0aec0; }
+        .grammar-item.done .g-jp { color: #a0aec0; }
+
+        @media (max-width: 768px) {
+            .page-header h1 { font-size: 1.9em; }
+            .summary-bar { flex-direction: column; align-items: stretch; }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="cloud_sync.js"></script>
+</head>
+<body>
+<div class="container">
+    <nav><a href="index.html">← Home</a></nav>
+    <div class="page-header">
+        <h1>N4 Grammar Checklist</h1>
+        <p>Every grammar point in Genki II (Lessons 13–23). Tick each one once it's solid.</p>
+    </div>
+
+    <div class="summary-bar">
+        <span class="count"><span id="done-count">0</span> / <span id="total-count">0</span></span>
+        <div class="progress-bar-container"><div class="progress-bar-fill" id="progress-fill"></div></div>
+    </div>
+
+    <div class="toggle-all-buttons">
+        <button onclick="expandAll()">Expand All</button>
+        <button onclick="collapseAll()">Collapse All</button>
+    </div>
+
+    <div id="lessons"></div>
+</div>
+
+<script>
+    // ── Genki II grammar points, grouped by lesson ──
+    // Each point has a stable id so progress survives edits/reordering.
+    const LESSONS = [
+        { n: 13, title: "Potential & Reasons", points: [
+            { id: "g13-1", jp: "Potential verbs", desc: "食べられる・飲める — being able to do something" },
+            { id: "g13-2", jp: "〜し", desc: "Listing multiple reasons (and…, and what's more…)" },
+            { id: "g13-3", jp: "〜そうです", desc: "Looks like / seems (based on appearance): おいしそう" },
+            { id: "g13-4", jp: "〜てみる", desc: "Try doing something (and see how it goes)" },
+            { id: "g13-5", jp: "なら", desc: "If it's the case that… (contextual conditional)" },
+            { id: "g13-6", jp: "一週間に三回", desc: "Counting frequency: X times per week/day/month" },
+        ]},
+        { n: 14, title: "Wants & Giving/Receiving", points: [
+            { id: "g14-1", jp: "ほしい", desc: "Wanting a thing (noun がほしい)" },
+            { id: "g14-2", jp: "〜かもしれません", desc: "Might / maybe / perhaps" },
+            { id: "g14-3", jp: "あげる・くれる・もらう", desc: "Giving and receiving things (direction of the gift)" },
+            { id: "g14-4", jp: "〜たらどうですか", desc: "Giving a suggestion: why don't you…?" },
+        ]},
+        { n: 15, title: "Volitional & Intentions", points: [
+            { id: "g15-1", jp: "Volitional form", desc: "行こう・食べよう — let's / I shall (casual)" },
+            { id: "g15-2", jp: "Volitional + と思っています", desc: "Stating an intention to do something" },
+            { id: "g15-3", jp: "〜ておく", desc: "Do something in advance / in preparation" },
+            { id: "g15-4", jp: "〜という", desc: "Introducing/naming: a thing called…" },
+        ]},
+        { n: 16, title: "Favors & Conditionals", points: [
+            { id: "g16-1", jp: "〜てあげる／てくれる／てもらう", desc: "Doing favors (giving/receiving actions)" },
+            { id: "g16-2", jp: "〜ていただけませんか", desc: "Polite request: could you please…?" },
+            { id: "g16-3", jp: "〜と (conditional)", desc: "Whenever/if A then B (natural consequence)" },
+            { id: "g16-4", jp: "〜てすみませんでした", desc: "Apologising for something you did" },
+        ]},
+        { n: 17, title: "Hearsay & More Conditionals", points: [
+            { id: "g17-1", jp: "〜そうです (hearsay)", desc: "I hear that… / reportedly (from a source)" },
+            { id: "g17-2", jp: "〜って", desc: "Casual quotation / 'they say that…'" },
+            { id: "g17-3", jp: "〜たら", desc: "If/when A happens, then B" },
+            { id: "g17-4", jp: "〜なくてもいいです", desc: "You don't have to / it's ok not to" },
+            { id: "g17-5", jp: "〜みたいです", desc: "It seems like / looks like (inference)" },
+            { id: "g17-6", jp: "〜前に／〜てから", desc: "Before doing… / after doing…" },
+        ]},
+        { n: 18, title: "Transitivity & Regret", points: [
+            { id: "g18-1", jp: "自動詞・他動詞", desc: "Transitivity pairs: あく/あける, つく/つける…" },
+            { id: "g18-2", jp: "〜てしまう", desc: "Do completely / do by mistake / regret" },
+            { id: "g18-3", jp: "〜と (whenever)", desc: "Recurring result: when you do A, B happens" },
+            { id: "g18-4", jp: "〜ながら", desc: "Doing two actions at once" },
+            { id: "g18-5", jp: "〜ばよかった", desc: "I wish I had… / should have…" },
+        ]},
+        { n: 19, title: "Honorifics & Expectation", points: [
+            { id: "g19-1", jp: "Honorific (respectful) verbs", desc: "いらっしゃる・召し上がる, お〜になる" },
+            { id: "g19-2", jp: "Giving respectful advice", desc: "お〜ください and polite recommendations" },
+            { id: "g19-3", jp: "〜てくれてありがとう", desc: "Thanking for a favour done for you" },
+            { id: "g19-4", jp: "〜てよかった", desc: "I'm glad that… (past action turned out well)" },
+            { id: "g19-5", jp: "〜はずです", desc: "It's supposed to be / expected that…" },
+        ]},
+        { n: 20, title: "Humble Speech & Embedded Questions", points: [
+            { id: "g20-1", jp: "Extra-modest expressions", desc: "〜ております and formal set phrases" },
+            { id: "g20-2", jp: "Humble verbs", desc: "参る・いたす・申す — lowering yourself" },
+            { id: "g20-3", jp: "〜ないで", desc: "Without doing… / please don't…" },
+            { id: "g20-4", jp: "Questions within larger sentences", desc: "〜か / 〜かどうか embedded questions" },
+            { id: "g20-5", jp: "name + という", desc: "A [person/place] called…" },
+            { id: "g20-6", jp: "〜やすい／〜にくい", desc: "Easy to… / hard to… do" },
+        ]},
+        { n: 21, title: "Passive", points: [
+            { id: "g21-1", jp: "Passive sentences (受身)", desc: "食べられる・見られる — the '-(ra)reru' passive" },
+            { id: "g21-2", jp: "〜てある", desc: "Something has been done (and remains so)" },
+            { id: "g21-3", jp: "〜間に", desc: "While / during the time that…" },
+            { id: "g21-4", jp: "Adjective + する", desc: "Making something [adjective]: 大きくする" },
+            { id: "g21-5", jp: "〜ておく (review)", desc: "Do in advance — reinforced in context" },
+        ]},
+        { n: 22, title: "Causative", points: [
+            { id: "g22-1", jp: "Causative sentences (使役)", desc: "行かせる・食べさせる — make/let someone do" },
+            { id: "g22-2", jp: "〜ていただけませんか (review)", desc: "Very polite request, extended" },
+            { id: "g22-3", jp: "Verb stem + なさい", desc: "Command form (parent/teacher to child)" },
+            { id: "g22-4", jp: "〜ば (conditional)", desc: "The '-eba' conditional: if A then B" },
+            { id: "g22-5", jp: "〜のに", desc: "Even though / despite (contrary to expectation)" },
+        ]},
+        { n: 23, title: "Causative-Passive & Wrap-up", points: [
+            { id: "g23-1", jp: "Causative-passive (使役受身)", desc: "行かせられる — being made to do something" },
+            { id: "g23-2", jp: "〜ても", desc: "Even if… / no matter…" },
+            { id: "g23-3", jp: "〜ことにする", desc: "Decide to do something" },
+            { id: "g23-4", jp: "〜ことにしている", desc: "Make it a habit / rule to do" },
+            { id: "g23-5", jp: "〜まで", desc: "Until… (up to the point that)" },
+            { id: "g23-6", jp: "〜方 (かた)", desc: "Way of doing something: 使い方, 食べ方" },
+        ]},
+    ];
+
+    const STORAGE_KEY = "n4_grammar_checked";
+
+    function loadChecked() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}"); }
+        catch (e) { return {}; }
+    }
+    function saveChecked(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+    function totalPoints() {
+        return LESSONS.reduce(function (a, l) { return a + l.points.length; }, 0);
+    }
+
+    function render() {
+        var checked = loadChecked();
+        var host = document.getElementById("lessons");
+        host.innerHTML = "";
+        LESSONS.forEach(function (lesson) {
+            var card = document.createElement("div");
+            card.className = "lesson-card";
+            var doneInLesson = lesson.points.filter(function (p) { return checked[p.id]; }).length;
+
+            var h2 = document.createElement("h2");
+            h2.innerHTML =
+                '<span class="toggle-arrow">▶</span>' +
+                '<span class="title-text">Lesson ' + lesson.n + ': ' + lesson.title + '</span>' +
+                '<span class="lesson-count">' + doneInLesson + '/' + lesson.points.length + '</span>';
+            card.appendChild(h2);
+
+            var body = document.createElement("div");
+            body.className = "lesson-body collapsed";
+            lesson.points.forEach(function (p) {
+                var row = document.createElement("label");
+                row.className = "grammar-item" + (checked[p.id] ? " done" : "");
+                row.innerHTML =
+                    '<input type="checkbox" ' + (checked[p.id] ? "checked" : "") + ' data-id="' + p.id + '">' +
+                    '<span class="g-main"><span class="g-point"><span class="g-jp">' + p.jp + '</span></span>' +
+                    '<div class="g-desc">' + p.desc + '</div></span>';
+                body.appendChild(row);
+            });
+            card.appendChild(body);
+            host.appendChild(card);
+
+            h2.addEventListener("click", function () {
+                body.classList.toggle("collapsed");
+                h2.querySelector(".toggle-arrow").textContent = body.classList.contains("collapsed") ? "▶" : "▼";
+            });
+        });
+        attachHandlers();
+        updateSummary();
+    }
+
+    function attachHandlers() {
+        document.querySelectorAll('.grammar-item input[type=checkbox]').forEach(function (cb) {
+            cb.addEventListener("change", function () {
+                var id = this.getAttribute("data-id");
+                var checked = loadChecked();
+                if (this.checked) { checked[id] = true; }
+                else { delete checked[id]; }
+                saveChecked(checked);
+                this.closest(".grammar-item").classList.toggle("done", this.checked);
+                // update the lesson mini-count in its header
+                var body = this.closest(".lesson-body");
+                var card = this.closest(".lesson-card");
+                var total = body.querySelectorAll("input[type=checkbox]").length;
+                var done = body.querySelectorAll("input[type=checkbox]:checked").length;
+                card.querySelector(".lesson-count").textContent = done + "/" + total;
+                updateSummary();
+            });
+        });
+    }
+
+    function updateSummary() {
+        var checked = loadChecked();
+        var total = totalPoints();
+        var done = 0;
+        LESSONS.forEach(function (l) { l.points.forEach(function (p) { if (checked[p.id]) done++; }); });
+        document.getElementById("done-count").textContent = done;
+        document.getElementById("total-count").textContent = total;
+        var pct = total > 0 ? Math.round((done / total) * 100) : 0;
+        document.getElementById("progress-fill").style.width = pct + "%";
+        // Publish the total so the dashboard grammar wheel stays exactly in sync.
+        try { localStorage.setItem("n4_grammar_total", String(total)); } catch (e) {}
+    }
+
+    function expandAll() {
+        document.querySelectorAll(".lesson-body").forEach(function (b) { b.classList.remove("collapsed"); });
+        document.querySelectorAll(".toggle-arrow").forEach(function (a) { a.textContent = "▼"; });
+    }
+    function collapseAll() {
+        document.querySelectorAll(".lesson-body").forEach(function (b) { b.classList.add("collapsed"); });
+        document.querySelectorAll(".toggle-arrow").forEach(function (a) { a.textContent = "▶"; });
+    }
+
+    render();
+    // Re-render if another device updates grammar progress mid-session.
+    window.addEventListener("cloudsync:update", function (e) {
+        if (!e.detail || e.detail.key === "n4_grammar_checked") render();
+    });
+    window.addEventListener("cloudsync:ready", render);
+</script>
+</body>
+</html>

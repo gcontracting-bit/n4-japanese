@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="auth.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JLPT N4 Exam Format</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family:'Segoe UI',system-ui,sans-serif; background:#f0f4f8; color:#333; padding:20px; line-height:1.6; }
+        .container { max-width:1000px; margin:0 auto; }
+        nav { margin-bottom:24px; }
+        nav a { display:inline-block; padding:10px 16px; background:#2b6cb0; color:#fff; text-decoration:none; border-radius:6px; font-weight:500; }
+        nav a:hover { background:#4299e1; }
+        .page-header { margin-bottom:20px; }
+        .page-header h1 { color:#2b6cb0; font-size:2.3em; margin-bottom:4px; }
+        .page-header p { color:#666; }
+
+        .card { background:#fff; border-radius:8px; padding:22px 26px; box-shadow:0 2px 8px rgba(0,0,0,0.08); margin-bottom:20px; }
+        .card h2 { color:#2b6cb0; font-size:1.3em; margin-bottom:12px; }
+        .card h3 { color:#2c5282; font-size:1.05em; margin:14px 0 6px; }
+        .card p { margin-bottom:8px; }
+        .card ul { margin:6px 0 10px 26px; }
+        .card li { margin-bottom:5px; }
+        .jp { color:#b83280; font-weight:600; }
+
+        table { width:100%; border-collapse:collapse; margin:12px 0; font-size:0.96em; }
+        th, td { border:1px solid #e2e8f0; padding:10px 12px; text-align:left; }
+        th { background:#ebf4ff; color:#2b5282; }
+        td.num { text-align:center; font-weight:600; color:#2d3748; white-space:nowrap; }
+
+        .score-highlight { background:linear-gradient(135deg,#22543d 0%,#38a169 100%); color:#fff; border-radius:8px; padding:20px 24px; margin-bottom:20px; text-align:center; }
+        .score-highlight .big { font-size:2.2em; font-weight:800; }
+        .score-highlight .sub { opacity:0.9; }
+
+        .pill { display:inline-block; background:#c6f6d5; color:#22543d; border-radius:12px; padding:2px 10px; font-size:0.82em; font-weight:700; }
+        .warn { background:#fffaf0; border-left:3px solid #dd6b20; padding:10px 14px; border-radius:0 5px 5px 0; margin-top:10px; font-size:0.93em; }
+        .warn strong { color:#c05621; }
+        .sources { font-size:0.82em; color:#718096; margin-top:6px; }
+        .sources a { color:#4299e1; }
+        @media (max-width:768px){ .page-header h1{font-size:1.8em;} table{font-size:0.85em;} }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="cloud_sync.js"></script>
+</head>
+<body>
+<div class="container">
+    <nav><a href="index.html">← Home</a></nav>
+    <div class="page-header">
+        <h1>JLPT N4 — Exam Format</h1>
+        <p>What test day actually looks like, and exactly what it takes to pass.</p>
+    </div>
+
+    <div class="score-highlight">
+        <div class="big">90 / 180</div>
+        <div class="sub">overall pass mark — <strong>plus</strong> you must clear each section's minimum below</div>
+    </div>
+
+    <div class="card">
+        <h2>The three test sections</h2>
+        <p>N4 is sat in three timed parts, in this order (short breaks between them):</p>
+        <table>
+            <tr><th>Order</th><th>Section (Japanese)</th><th>Contents</th><th>Time</th></tr>
+            <tr><td class="num">1</td><td>言語知識（文字・語彙）<br>Language Knowledge</td><td>Vocabulary: kanji readings, orthography, word choice, usage</td><td class="num">25 min</td></tr>
+            <tr><td class="num">2</td><td>言語知識（文法）・読解<br>Language Knowledge &amp; Reading</td><td>Grammar + reading passages</td><td class="num">55 min</td></tr>
+            <tr><td class="num">3</td><td>聴解<br>Listening</td><td>Listening comprehension</td><td class="num">35 min</td></tr>
+        </table>
+        <p>Roughly <strong>115 minutes</strong> of testing in total.</p>
+        <div class="warn"><strong>Note:</strong> the JLPT occasionally adjusts section timing. Confirm the exact minutes for your test date on the official site before exam day.</div>
+    </div>
+
+    <div class="card">
+        <h2>How it's scored</h2>
+        <p>Your marks are grouped into <strong>two scoring categories</strong>, not three:</p>
+        <table>
+            <tr><th>Scoring category</th><th>Score range</th><th>Sectional minimum</th></tr>
+            <tr><td>Language Knowledge (vocab + grammar) &amp; Reading</td><td class="num">0 – 120</td><td class="num">38</td></tr>
+            <tr><td>Listening</td><td class="num">0 – 60</td><td class="num">19</td></tr>
+            <tr><td><strong>Total</strong></td><td class="num"><strong>0 – 180</strong></td><td class="num"><strong>90</strong></td></tr>
+        </table>
+        <p>To pass you need <span class="pill">total ≥ 90</span> <strong>and</strong> <span class="pill">each category above its minimum</span>. Ace vocab/grammar but bomb listening (under 19) and it's still a fail — so listening can't be neglected.</p>
+    </div>
+
+    <div class="card">
+        <h2>Question types to expect</h2>
+        <h3>Vocabulary (文字・語彙)</h3>
+        <ul>
+            <li>Kanji reading — pick the hiragana reading of a kanji word</li>
+            <li>Orthography — pick the kanji for a word written in kana</li>
+            <li>Context — choose the word that fits the blank</li>
+            <li>Paraphrase — pick the sentence closest in meaning</li>
+            <li>Usage — choose the sentence where a word is used correctly</li>
+        </ul>
+        <h3>Grammar (文法)</h3>
+        <ul>
+            <li>Grammar form — choose the correct particle/ending for the blank</li>
+            <li>Sentence composition — reorder <span class="jp">★</span> pieces into a correct sentence</li>
+            <li>Text grammar — fill blanks so a short passage flows</li>
+        </ul>
+        <h3>Reading (読解)</h3>
+        <ul>
+            <li>Short passages (~150 chars) — a single comprehension question</li>
+            <li>Medium passages (~450 chars) — a few questions</li>
+            <li>Information retrieval — find details in a notice, ad, or schedule</li>
+        </ul>
+        <h3>Listening (聴解)</h3>
+        <ul>
+            <li>Task-based — what should the person do next?</li>
+            <li>Point comprehension — listen for a specific piece of information</li>
+            <li>Verbal expressions — choose the right thing to say in a situation</li>
+            <li>Quick response — pick the natural reply to a short line</li>
+        </ul>
+    </div>
+
+    <div class="card">
+        <h2>What N4 assumes you can do</h2>
+        <p>N4 certifies you can understand basic Japanese used in everyday situations: reading passages on familiar topics written in basic vocabulary and kanji, and following slow, everyday conversation. In numbers, roughly:</p>
+        <ul>
+            <li>~300 kanji and ~1,500 words (Genki I + II gets you there)</li>
+            <li>All the Genki II grammar — potential, conditionals, passive, causative, keigo basics</li>
+        </ul>
+        <div class="warn"><strong>Strategy:</strong> the two buffer weeks and 4-week review phase in your <a href="study-plan.html">study plan</a> are built around this scoring — mock exams surface which of the two categories is dragging, so you can defend the 38 / 19 minimums well before December.</div>
+        <p class="sources">Format &amp; scoring per the official JLPT guidelines (jlpt.jp) and current N4 test-format guides. Always reconfirm on <a href="https://www.jlpt.jp/e/guideline/results.html">jlpt.jp</a> for your exam sitting.</p>
+    </div>
+
+</div>
+</body>
+</html>

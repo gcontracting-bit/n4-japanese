@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="auth.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>20-Week Study Plan — JLPT N4</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: #f0f4f8; color: #333; padding: 20px; line-height: 1.6;
+        }
+        .container { max-width: 1000px; margin: 0 auto; }
+        nav { margin-bottom: 30px; }
+        nav a {
+            display: inline-block; padding: 10px 16px; background-color: #2b6cb0;
+            color: white; text-decoration: none; border-radius: 6px; font-weight: 500;
+            transition: background-color 0.3s ease;
+        }
+        nav a:hover { background-color: #4299e1; }
+
+        .page-header {
+            margin-bottom: 30px; display: flex; align-items: baseline;
+            justify-content: space-between; flex-wrap: wrap; gap: 12px;
+        }
+        .page-header-left h1 { color: #2b6cb0; font-size: 2.5em; margin-bottom: 4px; }
+        .page-header-left p { color: #666; font-size: 1.1em; }
+
+        .status-badge {
+            display: inline-block; padding: 8px 20px; border-radius: 20px;
+            font-weight: 700; font-size: 1em; letter-spacing: 0.3px; white-space: nowrap;
+            align-self: center; text-transform: uppercase;
+        }
+        .status-badge.on-track { background: #c6f6d5; color: #22543d; }
+        .status-badge.catch-up { background: #fefcbf; color: #744210; }
+        .status-badge.behind   { background: #fed7d7; color: #9b2c2c; }
+
+        .routine-header-box {
+            background: white; padding: 24px 30px; border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 24px;
+        }
+        .routine-header-box h3 { color: #2b6cb0; font-size: 1.2em; margin-bottom: 16px; }
+        .routine-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .routine-box {
+            background: #f9fafb; padding: 15px; border-radius: 5px; border-left: 3px solid #4299e1;
+        }
+        .routine-box strong { color: #2b6cb0; }
+        .routine-box ul { margin-left: 20px; margin-top: 8px; }
+        .routine-box li { margin-bottom: 5px; }
+
+        .phase-label {
+            margin: 34px 0 14px; font-size: 0.8em; font-weight: 800; letter-spacing: 1px;
+            text-transform: uppercase; color: #718096;
+            border-bottom: 2px solid #e2e8f0; padding-bottom: 6px;
+        }
+        .phase-label.review { color: #2f855a; border-color: #9ae6b4; }
+
+        .toggle-all-buttons { display: flex; gap: 10px; margin-bottom: 20px; }
+        .toggle-all-buttons button {
+            padding: 6px 16px; border: 1px solid #cbd5e0; background: white;
+            border-radius: 6px; cursor: pointer; font-size: 0.9em; color: #4a5568;
+            transition: background 0.2s ease;
+        }
+        .toggle-all-buttons button:hover { background: #edf2f7; }
+
+        .study-plan-card {
+            background: white; border-radius: 8px; padding: 24px; margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .study-plan-card h2 {
+            color: white; background: linear-gradient(135deg, #2b6cb0 0%, #4299e1 100%);
+            padding: 12px 16px; margin: -24px -24px 0 -24px; border-radius: 8px 8px 0 0;
+            font-size: 1.3em; cursor: pointer; display: flex; align-items: center; gap: 10px;
+            user-select: none; transition: background 0.35s ease;
+        }
+        .study-plan-card.review-card h2 { background: linear-gradient(135deg, #2f855a 0%, #48bb78 100%); }
+        .study-plan-card h2 .week-title-text { flex: 1; }
+        .study-plan-card.completed h2 { background: linear-gradient(135deg, #718096 0%, #a0aec0 100%); }
+
+        .week-checkbox {
+            width: 22px; height: 22px; min-width: 22px; appearance: none; -webkit-appearance: none;
+            border: 2px solid rgba(255,255,255,0.8); border-radius: 4px; background: transparent;
+            cursor: pointer; position: relative; transition: all 0.2s ease;
+        }
+        .week-checkbox:checked { background: rgba(255,255,255,0.9); border-color: rgba(255,255,255,0.9); }
+        .week-checkbox:checked::after {
+            content: '✓'; position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); font-size: 14px; font-weight: 800; color: #718096;
+        }
+
+        .toggle-arrow { display: inline-block; font-size: 1.1em; min-width: 18px; }
+        .section-content { padding: 20px 24px 24px 24px; }
+        .section-content.collapsed { display: none; }
+        .section-content p { margin-bottom: 10px; }
+        .section-content strong { color: #2b6cb0; }
+        .section-content ul { margin: 8px 0 12px 30px; }
+        .section-content li { margin-bottom: 6px; }
+        .week-dates { font-size: 0.78em; opacity: 0.85; font-weight: 400; margin-left: 4px; }
+
+        .milestone {
+            background: #ebf8ff; border-left: 3px solid #2b6cb0; padding: 10px 14px;
+            border-radius: 0 5px 5px 0; margin-top: 10px; font-size: 0.95em;
+        }
+        .milestone strong { color: #2b6cb0; }
+        .review-card .milestone { background: #f0fff4; border-color: #2f855a; }
+        .review-card .milestone strong { color: #2f855a; }
+
+        .progress-bar-container {
+            background: #e2e8f0; border-radius: 10px; height: 10px; margin-bottom: 24px; overflow: hidden;
+        }
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #48bb78, #38a169); height: 100%;
+            border-radius: 10px; transition: width 0.5s ease;
+        }
+
+        @media (max-width: 768px) {
+            .page-header { flex-direction: column; }
+            .page-header-left h1 { font-size: 2em; }
+            .routine-grid { grid-template-columns: 1fr; }
+            .study-plan-card { padding: 16px; }
+            .study-plan-card h2 { margin: -16px -16px 0 -16px; font-size: 1.1em; }
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="cloud_sync.js"></script>
+</head>
+<body>
+<div class="container">
+    <nav><a href="index.html">← Home</a></nav>
+
+    <div class="page-header">
+        <div class="page-header-left">
+            <h1>20-Week Study Plan</h1>
+            <p>JLPT N4 · Genki II (Lessons 13–23) — Target: Saturday 5 December 2026</p>
+        </div>
+        <span class="status-badge" id="status-badge">on-track</span>
+    </div>
+
+    <div class="progress-bar-container">
+        <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+    </div>
+
+    <div class="routine-header-box">
+        <h3>Daily Routine Templates</h3>
+        <div class="routine-grid">
+            <div class="routine-box">
+                <strong>Weekday (45–60 min)</strong>
+                <ul>
+                    <li>5–10 min: flashcard / Anki review (vocab + kanji)</li>
+                    <li>25–35 min: Genki II chapter work — grammar + textbook exercises</li>
+                    <li>10–15 min: listening (Genki II audio / podcast)</li>
+                </ul>
+            </div>
+            <div class="routine-box">
+                <strong>Weekend (1.5–2 hours)</strong>
+                <ul>
+                    <li>10–15 min: Anki review</li>
+                    <li>40–50 min: workbook exercises + writing practice</li>
+                    <li>20 min: reading (NHK Easy / graded readers)</li>
+                    <li>20 min: listening practice</li>
+                    <li>30 min: mock-exam sections (from the review phase)</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="toggle-all-buttons">
+        <button onclick="expandAll()">Expand All</button>
+        <button onclick="collapseAll()">Collapse All</button>
+    </div>
+
+    <div class="phase-label">Phase 1 · Genki II — textbook &amp; workbook (Weeks 1–16)</div>
+
+    <!-- WEEK 1 -->
+    <div class="study-plan-card" data-week="1">
+        <h2><span class="toggle-arrow">▶</span>
+            <span class="week-title-text">Week 1: Lesson 13 — Potential Verbs <span class="week-dates">(Jul 20 – Jul 26)</span></span>
+            <input type="checkbox" class="week-checkbox" data-week="1" title="Mark complete"></h2>
+        <div class="section-content collapsed">
+            <p><strong>Focus:</strong> Ease into Genki II. Lesson 13 grammar + textbook exercises.</p>
+            <ul>
+                <li>Grammar: potential verbs (食べられる／飲める), 〜し, 〜そうです (looks like), 〜てみる, なら, frequency (週に◯回)</li>
+                <li>Textbook: read the dialogue, do all in-chapter grammar exercises</li>
+                <li>Kanji: start Lesson 13 kanji set (~15 new)</li>
+                <li>Vocab: add Lesson 13 words to your deck — aim 8–10/day</li>
+            </ul>
+            <div class="milestone"><strong>Checkpoint:</strong> Can say what you're able/unable to do and give reasons with 〜し. ~55 Genki II vocab.</div>
+        </div>
+    </div>
+
+    <!-- WEEK 2 -->
+    <div class="study-plan-card" data-week="2">
+        <h2><span class="toggle-arrow">▶</span>
+            <span class="week-title-text">Week 2: Lesson 13 Workbook + Consolidate <span class="week-dates">(Jul 27 – Aug 02)</span></span>
+            <input type="checkbox" class="week-checkbox" data-week="2" title="Mark complete"></h2>
+        <div class="section-content collapsed">
+            <p><strong>Focus:</strong> Finish Lesson 13 completely — workbook, listening, kanji.</p>
+            <ul>
+                <li>Workbook: all Lesson 13 pages (grammar + listening comprehension)</li>
+                <li>Lock in the Lesson 13 kanji (reading + meaning)</li>
+                <li>Do the Genki 13 listening tracks — pause and shadow</li>
+                <li>Weekend: quick self-test on 〜そう vs 〜みたい and potential forms</li>
+            </ul>
+            <div class="milestone"><strong>Checkpoint:</strong> Lesson 13 done end-to-end. Potential verbs automatic. 15 kanji.</div>
+        </div>
+    </div>
+
+    <!-- WEEK 3 -->
+    <div class="study-plan-card" data-week="3">
+        <h2><span class="toggle-arrow">▶</span>
+            <span class="week-title-text">Week 3: Lesson 14 — Wants &amp; Giving/Receiving <span class="week-dates">(Aug 03 – Aug 09)</span></span>
+            <input type="checkbox" class="week-checkbox" data-week="3" title="Mark complete"></h2>
+        <div class="section-content collapsed">
+            <p><strong>Focus:</strong> Lesson 14 textbook + workbook in one week.</p>
+            <ul>
+                <li>Grammar: ほしい, 〜かもしれません, あげる／くれる／もらう, 〜たらどうですか</li>
+                <li>Drill the giving/receiving triangle — who gives to whom matters</li>
+                <li>Textbook + workbook exercises; Lesson 14 kanji (~15)</li>
+                <li>Vocab: 8–10/day</li>
+            </ul>
+            <div class="milestone"><strong>Checkpoint:</strong> Can express wants and describe gifts/favours in both directions. ~110 vocab, ~30 kanji.</div>
+        </div>
+    </div>
+
+    <!-- WEEK 4 -->
+    <div class="study-plan-card" data-week="4">
+        <h2><span class="toggle-arrow">▶</span>
+            <span class="week-title-text">Week 4: Lesson 15 — Volitional &amp; Intentions <span class="week-dates">(Aug 10 – Aug 16)</span></span>
+            <input type="checkbox" class="week-checkbox" data-week="4" title="Mark complete"></h2>
+        <div class="section-content collapsed">
+            <p><strong>Focus:</strong> Lesson 15 textbook + workbook.</p>
+            <ul>
+                <li>Grammar: volitional form (行こう／食べよう), volitional + と思っています, 〜ておく, 〜という</li>
+                <li>Drill volitional conjugation for all three verb groups</li>
+                <li>Textbook + workbook; Lesson 15 kanji (~16)</li>
+                <li>Weekend: write 5 sentences about your plans using 〜と思っています</li>
+            </ul>
+            <div class="milestone"><strong>Checkpoint:</strong> Can state intentions and say you'll do something in advance. ~165 vocab, ~46 kanji.</div>
+        </div>
+    </div>
+
+    <!-- WEEK 5 -->
+    <div class="study-plan-card" data-week="5">
+        <h2><span class="toggle-arrow">▶</span>
+            <span class="week-title-text">Week 5: Lesson 16 — Favors &amp; Conditionals (part 1) <span class="week-dates">(Aug 17 – Aug 23)</span></span>
+            <input type="checkbox" class="week-checkbox" data-week="5" title="Mark complete"></h2>
+        <div class="section-content collapsed">
+            <p><strong>Focus:</strong> Lesson 16 textbook — the favor verbs are dense, give them room.</p>
+            <ul>
+                <li>Grammar: 〜てあげる／てくれる／てもらう (doing favours), 〜ていただけませんか, 〜と (conditional)</li>
+                <li>This is where giving/receiving + te-form combine — drill slowly</li>
+                <li>Textbook exercises; begin Lesson 16 kanji (~15)</li>
+            </ul>
+            <div class="milestone"><strong>Checkpoint:</strong> Can ask for and describe favours politely. ~200 vocab.</div>
+        </div>
+    </div>
+
+    <!-- WEEK 6 -->
+    <div class="study-plan-card" data-week="6">
+        <h2><span class="toggle-arrow">▶</span>
+            <span class="week-title-text">Week 6: Lesson 16 Workbook + Lesson 17 start <span class="week-dates">(Aug 24 – Aug 30)</span></span>
+            <input type="checkbox" class="week-checkbox" data-week="6" title="Mark complete"></h2>
+        <div class="section-content collapsed">
+            <p><strong>Focus:</strong> Close out Lesson 16, open Lesson 17.</p>
+            <ul>
+                <li>Lesson 16 workbook + listening; finish Lesson 16 kanji</li>
+                <li>Start Lesson 17 grammar: 〜そうです (hearsay), 〜って, 〜たら</li>
+                <li>Note the difference: 〜そう (looks like, L13) vs 〜そう (I hear, L17)</li>
+            </ul>
+            <div class="milestone"><strong>Checkpoint:</strong> Lesson 16 complete. ~230 vocab, ~77 kanji.</div>
+        </div>
+    </div>
+
+    <!-- WEEK 7 -->
+    <div class="study-plan-card" data-week="7">
+        <h2><span class="toggle-arrow">▶</span>
+            <span class="week-title-text">Week 7: Lesson 17 — Hearsay &amp; たら <span class="week-dates">(Aug 31 – Sep 06)</span></span>
+            <input type="checkbox" class="week-checkbox" data-week="7" title="Mark complete"></h2>
+        <div class="section-content collapsed">
+            <p><strong>Focus:</strong> Finish Lesson 17 textbook + workbook.</p>
+            <ul>
+                <li>Grammar: 〜なくてもいいです, 〜みたいです, 〜前に／〜てから</li>
+                <li>Workbook + listening; Lesson 17 kanji (~16)</li>
+                <li>Compare all your conditionals so far: なら / と / たら</li>
+            </ul>
+            <div class="milestone"><strong>Checkpoint:</strong> Comfortable reporting what you heard and sequencing events. ~285 vocab.</div>
+        </div>
+    </div>
+
+    <!-- WEEK 8 (buffer/review) -->
+    <div class="study-plan-card review-card" data-week="8">
+        <h2><span class="toggle-arrow">▶</span>
+            <span class="week-title-text">Week 8: Catch-up &amp; Review — Lessons 13–17 <span class="week-dates">(Sep 07 – Sep 13)</span></span>
+            <input type="checkbox" class="week-checkbox" data-week="8" title="Mark complete"></h2>
+        <div class="section-content collapsed">
+            <p><strong>Focus:</strong> Breather week. Consolidate the first five chapters — no new grammar.</p>
+            <ul>
+                <li>Re-do any workbook sections that felt shaky</li>
+                <li>Full review of the three conditionals + giving/receiving + potential/volitional</li>
+                <li>Kanji + vocab clean-up: get everything from L13–17 to solid</li>
+                <li>Mini self-test: mixed grammar from L13–17</li>
+                <li>If you're ahead, get a head start on Lesson 18</li>
+            </ul>
+            <div class="milestone"><strong>Checkpoint:</strong> First 5 Genki II chapters genuinely solid. ~285 vocab, ~93 kanji. Buffer used or banked.</div>
+        </div>
+    </div>
+
+    <!-- WEEK 9 -->
+    <div class="study-plan-card" data-week="9">
+        <h2><span class="toggle-arrow">▶</span>
+            <span class="week-title-text">Week 9: Lesson 18 — Transitivity &amp; てしまう <span class="week-dates">(Sep 14 – Sep 20)</span></span>
+            <input type="checkbox" class="week-checkbox" data-week="9" title="Mark complete"></h2>
+        <div class="section-content collapsed">
+            <p><strong>Focus:</strong> Lesson 18 textbook + workbook.</p>
+            <ul>
+                <li>Grammar: transitivity pairs (自動詞・他動詞), 〜てしまう, 〜と (whenever), 〜ながら, 〜ばよかった</li>
+                <li>Make a transitivity-pair table (あく/あける, つく/つける, きえる/けす…) and drill it</li>
+                <li>Workbook + listening; Lesson 18 kanji (~16)</li>
+            </ul>
+            <div class="milestone"><strong>Checkpoint:</strong> Transitive/intransitive pairs no longer trip you up. ~340 vocab, ~109 kanji.</div>
+        </div>
+    </div>
+
+    <!-- WEEK 10 -->
+    <div class="study-plan-card" data-week="10">
+        <h2><span class="toggle-arrow">▶</span>
+            <span class="week-title-text">Week 10: Lesson 19 — Honorifics <span class="week-dates">(Sep 21 – Sep 27)</span></span>
+            <input type="checkbox" class="week-checkbox" data-week="10" title="Mark complete"></h2>
+        <div class="section-content collapsed">
+            <p><strong>Focus:</strong> Lesson 19 textbook + workbook — keigo begins.</p>
+            <ul>
+                <li>Grammar: honorific (respectful) verbs, giving respectful advice, 〜てくれてありがとう, 〜てよかった, 〜はずです</li>
+                <li>Memorise the irregular honorifics: いらっしゃる, 召し上がる, ご覧になる…</li>
+                <li>Workbook + listening; Lesson 19 kanji (~16)</li>
+            </ul>
+            <div class="milestone"><strong>Checkpoint:</strong> Can use respectful language and say what's supposed to happen. ~395 vocab, ~125 kanji.</div>
+        </div>
+    </div>
+
+    <!-- WEEK 11 -->
+    <div class="study-plan-card" data-week="11">
+        <h2><span class="toggle-arrow">▶</span>
+            <span class="week-title-text">Week 11: Lesson 20 — Humble Speech <span class="week-dates">(Sep 28 – Oct 04)</span></span>
+            <input type="checkbox" class="week-checkbox" data-week="11" title="Mark complete"></h2>
+        <div class="section-content collapsed">
+            <p><strong>Focus:</strong> Lesson 20 textbook + workbook — the other half of keigo.</p>
+            <ul>
+                <li>Grammar: extra-modest &amp; humble expressions, 〜ないで, questions within larger sentences (〜か／かどうか), name という, 〜やすい／〜にくい</li>
+                <li>Pair humble vs honorific side by side (伺う vs いらっしゃる, etc.)</li>
+                <li>Workbook + listening; Lesson 20 kanji (~16)</li>
+            </ul>
+            <div class="milestone"><strong>Checkpoint:</strong> Keigo (both directions) under control. ~450 vocab, ~141 kanji.</div>
+        </div>
+    </div>
+
+    <!-- WEEK 12 (buffer/review) -->
+    <div class="study-plan-card review-card" data-week="12">
+        <h2><span class="toggle-arrow">▶</span>
+            <span class="week-title-text">Week 12: Catch-up &amp; Review — Lessons 18–20 <span class="week-dates">(Oct 05 – Oct 11)</span></span>
+            <input type="checkbox" class="week-checkbox" data-week="12" title="Mark complete"></h2>
+        <div class="section-content collapsed">
+            <p><strong>Focus:</strong> Second buffer week. The keigo chapters are dense — let them settle.</p>
+            <ul>
+                <li>Re-drill honorific + humble verb tables until instant</li>
+                <li>Mixed review of L18–20 grammar and kanji</li>
+                <li>Vocab clean-up; clear any red/amber cards</li>
+                <li>Optional first look at Lesson 21 (passive) if you're ahead</li>
+            </ul>
+            <div class="milestone"><strong>Checkpoint:</strong> 8 of 11 chapters done and solid. ~450 vocab, ~141 kanji.</div>
+        </div>
+    </div>
+
+    <!-- WEEK 13 -->
+    <div class="study-plan-card" data-week="13">
+        <h2><span class="toggle-arrow">▶</span>
+            <span class="week-title-text">Week 13: Lesson 21 — Passive (受身) <span class="week-dates">(Oct 12 – Oct 18)</span></span>
+            <input type="checkbox" class="week-checkbox" data-week="13" title="Mark complete"></h2>
+        <div class="section-content collapsed">
+            <p><strong>Focus:</strong> Lesson 21 — one of the big three. Textbook + workbook.</p>
+            <ul>
+                <li>Grammar: passive sentences (〜られる), 〜てある, 〜間に, adjective + する</li>
+                <li>Drill passive conjugation for all verb groups; watch the に (agent) particle</li>
+                <li>Workbook + listening; Lesson 21 kanji (~16)</li>
+            </ul>
+            <div class="milestone"><strong>Checkpoint:</strong> Can form and understand passive sentences. ~505 vocab, ~157 kanji.</div>
+        </div>
+    </div>
+
+    <!-- WEEK 14 -->
+    <div class="study-plan-card" data-week="14">
+        <h2><span class="toggle-arrow">▶</span>
+            <span class="week-title-text">Week 14: Lesson 22 — Causative (使役) <span class="week-dates">(Oct 19 – Oct 25)</span></span>
+            <input type="checkbox" class="week-checkbox" data-week="14" title="Mark complete"></h2>
+        <div class="section-content collapsed">
+            <p><strong>Focus:</strong> Lesson 22 — causative. Textbook + workbook.</p>
+            <ul>
+                <li>Grammar: causative sentences (〜せる／させる), 〜ていただけませんか, verb stem + なさい, 〜ば (conditional), 〜のに</li>
+                <li>Contrast causative (make/let do) with passive from last week</li>
+                <li>Workbook + listening; Lesson 22 kanji (~16)</li>
+            </ul>
+            <div class="milestone"><strong>Checkpoint:</strong> Can say you make/let someone do something, and use the ば-conditional. ~560 vocab, ~166 kanji.</div>
+        </div>
+    </div>
+
+    <!-- WEEK 15 -->
+    <div class="study-plan-card" data-week="15">
+        <h2><span class="toggle-arrow">▶</span>
+            <span class="week-title-text">Week 15: Lesson 23 — Causative-Passive (使役受身) <span class="week-dates">(Oct 26 – Nov 01)</span></span>
+            <input type="checkbox" class="week-checkbox" data-week="15" title="Mark complete"></h2>
+        <div class="section-content collapsed">
+            <p><strong>Focus:</strong> Final Genki II chapter — the hardest form. Textbook + workbook.</p>
+            <ul>
+                <li>Grammar: causative-passive (〜させられる), 〜ても, 〜ことにする, 〜ことにしている, 〜まで, 〜方 (かた)</li>
+                <li>Build the passive → causative → causative-passive ladder in one table</li>
+                <li>Workbook + listening; Lesson 23 kanji (final ~16)</li>
+            </ul>
+            <div class="milestone"><strong>Checkpoint:</strong> 🎉 Genki II complete. All 11 chapters + all N4 kanji done. ~615 vocab, ~173 kanji.</div>
+        </div>
+    </div>
+
+    <!-- WEEK 16 -->
+    <div class="study-plan-card" data-week="16">
+        <h2><span class="toggle-arrow">▶</span>
+            <span class="week-title-text">Week 16: Full Genki II Review + Mock #1 <span class="week-dates">(Nov 02 – Nov 08)</span></span>
+            <input type="checkbox" class="week-checkbox" data-week="16" title="Mark complete"></h2>
+        <div class="section-content collapsed">
+            <p><strong>Focus:</strong> Consolidate the whole book and take a baseline mock.</p>
+            <ul>
+                <li>One pass through the full Genki II grammar checklist — flag anything weak</li>
+                <li>Vocab + kanji consolidation: everything to green</li>
+                <li>Weekend: take your FIRST full N4 mock exam (timed). Score it honestly.</li>
+                <li>Record which sections (vocab / grammar / reading / listening) are weakest</li>
+            </ul>
+            <div class="milestone"><strong>Checkpoint:</strong> Book finished. Mock #1 done — you now know exactly what to fix.</div>
+        </div>
+    </div>
+
+    <div class="phase-label review">Phase 2 · Review &amp; mock exams (Weeks 17–20)</div>
+
+    <!-- WEEK 17 -->
+    <div class="study-plan-card review-card" data-week="17">
+        <h2><span class="toggle-arrow">▶</span>
+            <span class="week-title-text">Week 17: Weak-Spot Assault + Mock #2 <span class="week-dates">(Nov 09 – Nov 15)</span></span>
+            <input type="checkbox" class="week-checkbox" data-week="17" title="Mark complete"></h2>
+        <div class="section-content collapsed">
+            <p><strong>Focus:</strong> Attack whatever Mock #1 exposed.</p>
+            <ul>
+                <li>Rank your weakest areas from Mock #1 and spend most sessions there</li>
+                <li>Grammar weak? Re-drill those Genki chapters' exercises</li>
+                <li>Deep review of the grammar checklist — every point to a tick</li>
+                <li>Weekend: Mock #2 — compare section scores to Mock #1</li>
+            </ul>
+            <div class="milestone"><strong>Checkpoint:</strong> Mock #2 shows clear improvement. Gap areas narrowing.</div>
+        </div>
+    </div>
+
+    <!-- WEEK 18 -->
+    <div class="study-plan-card review-card" data-week="18">
+        <h2><span class="toggle-arrow">▶</span>
+            <span class="week-title-text">Week 18: Reading &amp; Listening Focus + Mock #3 <span class="week-dates">(Nov 16 – Nov 22)</span></span>
+            <input type="checkbox" class="week-checkbox" data-week="18" title="Mark complete"></h2>
+        <div class="section-content collapsed">
+            <p><strong>Focus:</strong> The two sections people underprepare for.</p>
+            <ul>
+                <li>Reading: one N4-level passage per day, timed — build reading speed</li>
+                <li>Listening: full N4 listening sections back-to-back, 30 min/day</li>
+                <li>Timed section drills for each JLPT part under pressure</li>
+                <li>Weekend: Mock #3 under strict conditions</li>
+            </ul>
+            <div class="milestone"><strong>Checkpoint:</strong> Reading speed and listening comfort up. Scoring 65%+ on mocks.</div>
+        </div>
+    </div>
+
+    <!-- WEEK 19 -->
+    <div class="study-plan-card review-card" data-week="19">
+        <h2><span class="toggle-arrow">▶</span>
+            <span class="week-title-text">Week 19: Exam Simulation Mode <span class="week-dates">(Nov 23 – Nov 29)</span></span>
+            <input type="checkbox" class="week-checkbox" data-week="19" title="Mark complete"></h2>
+        <div class="section-content collapsed">
+            <p><strong>Focus:</strong> Full-length, real-conditions practice. Build stamina and timing.</p>
+            <ul>
+                <li>Full timed mock exam(s) — no phone, no pausing</li>
+                <li>Vocab/kanji: maintenance only (reviews, no new cards)</li>
+                <li>One quick pass through all Genki II grammar points</li>
+                <li>Fix the recurring mistakes that keep showing up across mocks</li>
+            </ul>
+            <div class="milestone"><strong>Checkpoint:</strong> Scoring 70%+ comfortably. Timing is second nature.</div>
+        </div>
+    </div>
+
+    <!-- WEEK 20 -->
+    <div class="study-plan-card review-card" data-week="20">
+        <h2><span class="toggle-arrow">▶</span>
+            <span class="week-title-text">Week 20: Final Week — Stay Sharp, Don't Cram <span class="week-dates">(Nov 30 – Dec 05)</span></span>
+            <input type="checkbox" class="week-checkbox" data-week="20" title="Mark complete"></h2>
+        <div class="section-content collapsed">
+            <p><strong>Focus:</strong> Light review, confidence, rest before exam day.</p>
+            <ul>
+                <li>Mon–Wed: light reviews + one listening session per day. No new material.</li>
+                <li>Thu: quick scan of the grammar checklist — refresh tricky points</li>
+                <li>Fri (Dec 4): one light practice section if you want, then relax. Prep materials (pencils, eraser, watch, photo ID). Early night.</li>
+                <li>Sat (Dec 5): EXAM DAY. Trust your preparation — you've done the work.</li>
+            </ul>
+            <div class="milestone"><strong>Checkpoint:</strong> Ready. ~615 vocab, 173 kanji, all Genki II grammar, 4 mocks behind you. Go get N4.</div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // ── Week start dates (Monday of each week) ──
+    const WEEK_STARTS = [
+        new Date('2026-07-20'), new Date('2026-07-27'), new Date('2026-08-03'), new Date('2026-08-10'),
+        new Date('2026-08-17'), new Date('2026-08-24'), new Date('2026-08-31'), new Date('2026-09-07'),
+        new Date('2026-09-14'), new Date('2026-09-21'), new Date('2026-09-28'), new Date('2026-10-05'),
+        new Date('2026-10-12'), new Date('2026-10-19'), new Date('2026-10-26'), new Date('2026-11-02'),
+        new Date('2026-11-09'), new Date('2026-11-16'), new Date('2026-11-23'), new Date('2026-11-30'),
+    ];
+    const TOTAL_WEEKS = 20;
+    const STORAGE_KEY = 'n4_study_plan_completed';
+
+    function loadCompleted() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); } catch(e) { return {}; }
+    }
+    function saveCompleted(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+
+    function getCurrentWeek() {
+        const now = new Date(); now.setHours(0,0,0,0);
+        for (let i = WEEK_STARTS.length - 1; i >= 0; i--) {
+            if (now >= WEEK_STARTS[i]) return i + 1;
+        }
+        return 0; // plan hasn't started yet (before Jul 20)
+    }
+
+    function updateStatus() {
+        const completed = loadCompleted();
+        const currentWeek = getCurrentWeek();
+        let shouldBeCompleted = Math.max(0, currentWeek - 1);
+        let actuallyCompleted = 0;
+        for (let w = 1; w <= shouldBeCompleted; w++) { if (completed[w]) actuallyCompleted++; }
+        const behind = shouldBeCompleted - actuallyCompleted;
+        const badge = document.getElementById('status-badge');
+
+        if (behind <= 0) { badge.textContent = 'on-track'; badge.className = 'status-badge on-track'; }
+        else if (behind === 1) { badge.textContent = 'catch-up'; badge.className = 'status-badge catch-up'; }
+        else { badge.textContent = 'behind'; badge.className = 'status-badge behind'; }
+
+        let totalCompleted = 0;
+        for (let w = 1; w <= TOTAL_WEEKS; w++) { if (completed[w]) totalCompleted++; }
+        const pct = Math.round((totalCompleted / TOTAL_WEEKS) * 100);
+        document.getElementById('progress-fill').style.width = pct + '%';
+    }
+
+    function applyCompletedState() {
+        const completed = loadCompleted();
+        document.querySelectorAll('.week-checkbox').forEach(function(cb) {
+            const week = cb.getAttribute('data-week');
+            if (completed[week]) {
+                cb.checked = true;
+                cb.closest('.study-plan-card').classList.add('completed');
+            } else {
+                cb.checked = false;
+                cb.closest('.study-plan-card').classList.remove('completed');
+            }
+        });
+        updateStatus();
+    }
+
+    document.querySelectorAll('.week-checkbox').forEach(function(cb) {
+        cb.addEventListener('click', function(e) { e.stopPropagation(); });
+        cb.addEventListener('change', function() {
+            const week = this.getAttribute('data-week');
+            const card = this.closest('.study-plan-card');
+            const completed = loadCompleted();
+            if (this.checked) { completed[week] = true; card.classList.add('completed'); }
+            else { delete completed[week]; card.classList.remove('completed'); }
+            saveCompleted(completed);
+            updateStatus();
+        });
+    });
+
+    document.querySelectorAll('.study-plan-card h2').forEach(function(header) {
+        header.addEventListener('click', function(e) {
+            if (e.target.classList.contains('week-checkbox')) return;
+            const content = this.nextElementSibling;
+            const arrow = this.querySelector('.toggle-arrow');
+            content.classList.toggle('collapsed');
+            arrow.textContent = content.classList.contains('collapsed') ? '▶' : '▼';
+        });
+    });
+
+    function expandAll() {
+        document.querySelectorAll('.section-content').forEach(c => c.classList.remove('collapsed'));
+        document.querySelectorAll('.toggle-arrow').forEach(a => a.textContent = '▼');
+    }
+    function collapseAll() {
+        document.querySelectorAll('.section-content').forEach(c => c.classList.add('collapsed'));
+        document.querySelectorAll('.toggle-arrow').forEach(a => a.textContent = '▶');
+    }
+
+    applyCompletedState();
+    // Reflect changes pushed from another device.
+    window.addEventListener('cloudsync:update', function(e) {
+        if (!e.detail || e.detail.key === 'n4_study_plan_completed') applyCompletedState();
+    });
+    window.addEventListener('cloudsync:ready', applyCompletedState);
+</script>
+</body>
+</html>

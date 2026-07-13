@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<script src="auth.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N4 Verb Forms — Genki II</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background:#f0f4f8; color:#333; padding:20px; line-height:1.6; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        nav { margin-bottom: 24px; }
+        nav a { display:inline-block; padding:10px 16px; background:#2b6cb0; color:#fff; text-decoration:none; border-radius:6px; font-weight:500; }
+        nav a:hover { background:#4299e1; }
+        .page-header { margin-bottom: 20px; }
+        .page-header h1 { color:#2b6cb0; font-size:2.3em; margin-bottom:4px; }
+        .page-header p { color:#666; }
+
+        .intro-box { background:#fff; border-radius:8px; padding:18px 22px; box-shadow:0 2px 8px rgba(0,0,0,0.08); margin-bottom:22px; }
+        .intro-box strong { color:#2b6cb0; }
+        .intro-box .groups { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:12px; }
+        .group-card { background:#f9fafb; border-left:3px solid #4299e1; border-radius:5px; padding:12px 14px; }
+        .group-card h4 { color:#2b6cb0; margin-bottom:4px; }
+        .group-card .ex { font-size:0.9em; color:#555; }
+
+        .toggle-all-buttons { display:flex; gap:10px; margin-bottom:18px; }
+        .toggle-all-buttons button { padding:6px 16px; border:1px solid #cbd5e0; background:#fff; border-radius:6px; cursor:pointer; font-size:0.9em; color:#4a5568; }
+        .toggle-all-buttons button:hover { background:#edf2f7; }
+
+        .form-card { background:#fff; border-radius:8px; margin-bottom:18px; box-shadow:0 2px 8px rgba(0,0,0,0.1); overflow:hidden; }
+        .form-card h2 { color:#fff; background:linear-gradient(135deg,#2b6cb0 0%,#4299e1 100%); padding:12px 16px; font-size:1.15em; cursor:pointer; display:flex; align-items:center; gap:10px; user-select:none; }
+        .form-card h2 .t { flex:1; }
+        .form-card h2 .lesson-tag { font-size:0.72em; opacity:0.85; font-weight:600; background:rgba(255,255,255,0.2); padding:2px 8px; border-radius:10px; }
+        .toggle-arrow { min-width:16px; }
+        .form-body { padding:16px 20px 20px; }
+        .form-body.collapsed { display:none; }
+        .form-body p { margin-bottom:10px; }
+        .form-body .jp { color:#2b6cb0; font-weight:700; }
+        .form-body ul { margin:6px 0 12px 26px; }
+        .form-body li { margin-bottom:5px; }
+
+        table.conj { width:100%; border-collapse:collapse; margin:12px 0; font-size:0.95em; }
+        table.conj th, table.conj td { border:1px solid #e2e8f0; padding:8px 10px; text-align:left; }
+        table.conj th { background:#ebf4ff; color:#2b5282; }
+        table.conj td.jp { color:#b83280; font-weight:600; }
+        .note { background:#fffaf0; border-left:3px solid #dd6b20; padding:8px 12px; border-radius:0 5px 5px 0; font-size:0.92em; margin-top:8px; }
+        .note strong { color:#c05621; }
+        .ex-block { background:#f7fafc; border-radius:6px; padding:10px 14px; margin-top:8px; }
+        .ex-block div { margin-bottom:4px; }
+        .ex-block .j { color:#2d3748; font-weight:600; }
+        .ex-block .e { color:#718096; font-size:0.9em; }
+
+        @media (max-width:768px){ .page-header h1{font-size:1.8em;} .intro-box .groups{grid-template-columns:1fr;} table.conj{font-size:0.85em;} }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="cloud_sync.js"></script>
+</head>
+<body>
+<div class="container">
+    <nav><a href="index.html">← Home</a></nav>
+    <div class="page-header">
+        <h1>N4 Verb Forms</h1>
+        <p>The conjugations that make or break N4 — potential, volitional, conditionals, passive, causative, causative-passive.</p>
+    </div>
+
+    <div class="intro-box">
+        <strong>First, know your verb group.</strong> Every rule below depends on it.
+        <div class="groups">
+            <div class="group-card"><h4>る-verbs (Ichidan)</h4><div class="ex">Stem + る. Drop る to conjugate.<br>食べる, 見る, 起きる, 寝る</div></div>
+            <div class="group-card"><h4>う-verbs (Godan)</h4><div class="ex">End in a -u sound; the vowel before it shifts.<br>行く, 飲む, 話す, 買う, 待つ</div></div>
+            <div class="group-card"><h4>Irregular</h4><div class="ex">Only two — memorise them.<br>する → し…, 来る(くる) → こ…</div></div>
+        </div>
+    </div>
+
+    <div class="toggle-all-buttons">
+        <button onclick="expandAll()">Expand All</button>
+        <button onclick="collapseAll()">Collapse All</button>
+    </div>
+
+    <!-- POTENTIAL -->
+    <div class="form-card">
+        <h2><span class="toggle-arrow">▶</span><span class="t">Potential — "can do"</span><span class="lesson-tag">L13</span></h2>
+        <div class="form-body collapsed">
+            <p>Says you are <strong>able</strong> to do something. The object often takes <span class="jp">が</span> instead of を.</p>
+            <table class="conj">
+                <tr><th>Group</th><th>Rule</th><th>Example</th></tr>
+                <tr><td>る-verb</td><td>drop る → +られる</td><td class="jp">食べる → 食べられる</td></tr>
+                <tr><td>う-verb</td><td>final -u → -eru</td><td class="jp">行く → 行ける / 飲む → 飲める</td></tr>
+                <tr><td>する</td><td>→ できる</td><td class="jp">する → できる</td></tr>
+                <tr><td>来る</td><td>→ 来られる (こられる)</td><td class="jp">来る → 来られる</td></tr>
+            </table>
+            <div class="note"><strong>Note:</strong> potential verbs all become る-verbs, so they conjugate like 食べる (食べられます, 食べられない, 食べられた).</div>
+            <div class="ex-block">
+                <div><span class="j">日本語が話せます。</span> <span class="e">I can speak Japanese.</span></div>
+                <div><span class="j">きのうは寝られませんでした。</span> <span class="e">I couldn't sleep yesterday.</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- VOLITIONAL -->
+    <div class="form-card">
+        <h2><span class="toggle-arrow">▶</span><span class="t">Volitional — "let's / I shall"</span><span class="lesson-tag">L15</span></h2>
+        <div class="form-body collapsed">
+            <p>The casual form of ～ましょう. With <span class="jp">～と思っています</span> it states an intention.</p>
+            <table class="conj">
+                <tr><th>Group</th><th>Rule</th><th>Example</th></tr>
+                <tr><td>る-verb</td><td>drop る → +よう</td><td class="jp">食べる → 食べよう</td></tr>
+                <tr><td>う-verb</td><td>final -u → -ou</td><td class="jp">行く → 行こう / 飲む → 飲もう</td></tr>
+                <tr><td>する</td><td>→ しよう</td><td class="jp">する → しよう</td></tr>
+                <tr><td>来る</td><td>→ 来よう (こよう)</td><td class="jp">来る → 来よう</td></tr>
+            </table>
+            <div class="ex-block">
+                <div><span class="j">週末、映画を見よう。</span> <span class="e">Let's watch a movie this weekend.</span></div>
+                <div><span class="j">日本で働こうと思っています。</span> <span class="e">I'm thinking of working in Japan.</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- BA CONDITIONAL -->
+    <div class="form-card">
+        <h2><span class="toggle-arrow">▶</span><span class="t">Conditional ば — "if"</span><span class="lesson-tag">L22</span></h2>
+        <div class="form-body collapsed">
+            <p>A hypothetical "if A, then B". Focuses on the condition itself.</p>
+            <table class="conj">
+                <tr><th>Type</th><th>Rule</th><th>Example</th></tr>
+                <tr><td>る-verb</td><td>drop る → +れば</td><td class="jp">食べる → 食べれば</td></tr>
+                <tr><td>う-verb</td><td>final -u → -eba</td><td class="jp">行く → 行けば</td></tr>
+                <tr><td>い-adjective</td><td>drop い → +ければ</td><td class="jp">安い → 安ければ</td></tr>
+                <tr><td>negative</td><td>～ない → ～なければ</td><td class="jp">行かない → 行かなければ</td></tr>
+            </table>
+            <div class="ex-block">
+                <div><span class="j">安ければ買います。</span> <span class="e">If it's cheap, I'll buy it.</span></div>
+                <div><span class="j">薬を飲めば、よくなりますよ。</span> <span class="e">If you take the medicine, you'll get better.</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TARA -->
+    <div class="form-card">
+        <h2><span class="toggle-arrow">▶</span><span class="t">Conditional たら — "when / if"</span><span class="lesson-tag">L17</span></h2>
+        <div class="form-body collapsed">
+            <p>Built straight off the past (た) form — the easiest conditional. "Once A happens, B."</p>
+            <table class="conj">
+                <tr><th>Base</th><th>Rule</th><th>Example</th></tr>
+                <tr><td>any verb</td><td>past た/だ + ら</td><td class="jp">食べた → 食べたら / 飲んだ → 飲んだら</td></tr>
+                <tr><td>い-adjective</td><td>past かった + ら</td><td class="jp">高かった → 高かったら</td></tr>
+                <tr><td>noun/な-adj</td><td>だった + ら</td><td class="jp">暇だった → 暇だったら</td></tr>
+            </table>
+            <div class="ex-block">
+                <div><span class="j">うちに帰ったら、電話します。</span> <span class="e">When I get home, I'll call you.</span></div>
+                <div><span class="j">お金があったら、旅行したいです。</span> <span class="e">If I had money, I'd want to travel.</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PASSIVE -->
+    <div class="form-card">
+        <h2><span class="toggle-arrow">▶</span><span class="t">Passive (受身) — "is done to"</span><span class="lesson-tag">L21</span></h2>
+        <div class="form-body collapsed">
+            <p>The doer takes <span class="jp">に</span>. Often used for annoyance ("suffering passive").</p>
+            <table class="conj">
+                <tr><th>Group</th><th>Rule</th><th>Example</th></tr>
+                <tr><td>る-verb</td><td>drop る → +られる</td><td class="jp">食べる → 食べられる</td></tr>
+                <tr><td>う-verb</td><td>final -u → -areru</td><td class="jp">飲む → 飲まれる / 言う → 言われる</td></tr>
+                <tr><td>する</td><td>→ される</td><td class="jp">する → される</td></tr>
+                <tr><td>来る</td><td>→ 来られる (こられる)</td><td class="jp">来る → 来られる</td></tr>
+            </table>
+            <div class="note"><strong>Watch out:</strong> for る-verbs the passive and potential look identical (食べられる). Context tells them apart.</div>
+            <div class="ex-block">
+                <div><span class="j">先生にほめられました。</span> <span class="e">I was praised by the teacher.</span></div>
+                <div><span class="j">弟にケーキを食べられた。</span> <span class="e">My little brother ate my cake (on me).</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CAUSATIVE -->
+    <div class="form-card">
+        <h2><span class="toggle-arrow">▶</span><span class="t">Causative (使役) — "make / let do"</span><span class="lesson-tag">L22</span></h2>
+        <div class="form-body collapsed">
+            <p>Make or let someone do something. The person made/allowed takes <span class="jp">に</span> or <span class="jp">を</span>.</p>
+            <table class="conj">
+                <tr><th>Group</th><th>Rule</th><th>Example</th></tr>
+                <tr><td>る-verb</td><td>drop る → +させる</td><td class="jp">食べる → 食べさせる</td></tr>
+                <tr><td>う-verb</td><td>final -u → -aseru</td><td class="jp">行く → 行かせる / 待つ → 待たせる</td></tr>
+                <tr><td>する</td><td>→ させる</td><td class="jp">する → させる</td></tr>
+                <tr><td>来る</td><td>→ 来させる (こさせる)</td><td class="jp">来る → 来させる</td></tr>
+            </table>
+            <div class="ex-block">
+                <div><span class="j">母は妹に部屋をそうじさせた。</span> <span class="e">Mom made my sister clean the room.</span></div>
+                <div><span class="j">先生は学生を早く帰らせた。</span> <span class="e">The teacher let the students go home early.</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CAUSATIVE-PASSIVE -->
+    <div class="form-card">
+        <h2><span class="toggle-arrow">▶</span><span class="t">Causative-Passive (使役受身) — "made to do"</span><span class="lesson-tag">L23</span></h2>
+        <div class="form-body collapsed">
+            <p>You are <strong>made</strong> to do something (usually unwillingly). Build causative first, then make it passive: させる → させられる.</p>
+            <table class="conj">
+                <tr><th>Group</th><th>Rule</th><th>Example</th></tr>
+                <tr><td>る-verb</td><td>drop る → +させられる</td><td class="jp">食べる → 食べさせられる</td></tr>
+                <tr><td>う-verb</td><td>-u → -aserareru (often contracted -asareru)</td><td class="jp">飲む → 飲まされる / 待つ → 待たされる</td></tr>
+                <tr><td>する</td><td>→ させられる</td><td class="jp">する → させられる</td></tr>
+                <tr><td>来る</td><td>→ 来させられる (こさせられる)</td><td class="jp">来る → 来させられる</td></tr>
+            </table>
+            <div class="note"><strong>Tip:</strong> for う-verbs the contracted form (飲まされる) is very common in speech. ～す verbs like 話す don't contract → 話させられる.</div>
+            <div class="ex-block">
+                <div><span class="j">パーティーで歌を歌わされた。</span> <span class="e">I was made to sing at the party.</span></div>
+                <div><span class="j">子どものとき、毎日ピアノを練習させられた。</span> <span class="e">As a kid, I was made to practice piano every day.</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HONORIFIC / HUMBLE -->
+    <div class="form-card">
+        <h2><span class="toggle-arrow">▶</span><span class="t">Honorific &amp; Humble verbs (keigo)</span><span class="lesson-tag">L19–20</span></h2>
+        <div class="form-body collapsed">
+            <p>Raise the other person (honorific / 尊敬語) or lower yourself (humble / 謙譲語).</p>
+            <table class="conj">
+                <tr><th>Plain</th><th>Honorific (them)</th><th>Humble (me)</th></tr>
+                <tr><td>いる／行く／来る</td><td class="jp">いらっしゃる</td><td class="jp">おる／参る (まいる)</td></tr>
+                <tr><td>食べる／飲む</td><td class="jp">召し上がる</td><td class="jp">いただく</td></tr>
+                <tr><td>言う</td><td class="jp">おっしゃる</td><td class="jp">申す (もうす)</td></tr>
+                <tr><td>する</td><td class="jp">なさる</td><td class="jp">いたす</td></tr>
+                <tr><td>見る</td><td class="jp">ご覧になる</td><td class="jp">拝見する (はいけんする)</td></tr>
+            </table>
+            <div class="note"><strong>General patterns:</strong> honorific お＋stem＋になる (お書きになる); humble お＋stem＋する (お持ちします).</div>
+        </div>
+    </div>
+
+    <!-- COMMANDS -->
+    <div class="form-card">
+        <h2><span class="toggle-arrow">▶</span><span class="t">Commands — なさい &amp; imperative</span><span class="lesson-tag">L22</span></h2>
+        <div class="form-body collapsed">
+            <p><span class="jp">なさい</span> is a firm but polite command (parent/teacher → child): verb stem + なさい.</p>
+            <div class="ex-block">
+                <div><span class="j">早く寝なさい。</span> <span class="e">Go to bed early.</span></div>
+                <div><span class="j">よく勉強しなさい。</span> <span class="e">Study hard.</span></div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    document.querySelectorAll('.form-card h2').forEach(function(h){
+        h.addEventListener('click', function(){
+            var body = this.nextElementSibling;
+            var arrow = this.querySelector('.toggle-arrow');
+            body.classList.toggle('collapsed');
+            arrow.textContent = body.classList.contains('collapsed') ? '▶' : '▼';
+        });
+    });
+    function expandAll(){ document.querySelectorAll('.form-body').forEach(b=>b.classList.remove('collapsed')); document.querySelectorAll('.toggle-arrow').forEach(a=>a.textContent='▼'); }
+    function collapseAll(){ document.querySelectorAll('.form-body').forEach(b=>b.classList.add('collapsed')); document.querySelectorAll('.toggle-arrow').forEach(a=>a.textContent='▶'); }
+</script>
+</body>
+</html>
